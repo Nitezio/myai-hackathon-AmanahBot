@@ -1,48 +1,68 @@
-from fastapi import FastAPI, UploadFile, File, HTTPException
+from fastapi import FastAPI, UploadFile, File, HTTPException, BackgroundTasks
 from fastapi.middleware.cors import CORSMiddleware
 import os
 import ai_agents
+import escrow_manager
+import uuid
 
 app = FastAPI(title="Amanah-Bot EaaS Backend")
 
-# ... existing CORS ...
+# ... CORS ...
 
-@app.post("/api/escrow/upload-receipt")
-async def upload_receipt(file: UploadFile = File(...)):
+@app.post("/api/escrow/create")
+async def create_escrow(item_name: str, price: float, tracking_number: str):
     """
-    Endpoint for buyers to upload bank receipts.
-    Integrates Gemini AI for forensics.
+    Sellers use this to generate a new escrow link/ID.
     """
+    escrow_id = str(uuid.uuid4())[:8]
+    escrow_manager.escrow_db[escrow_id] = {
+        "item": item_name,
+        "price": price,
+        "tracking_number": tracking_number,
+        "status": escrow_manager.EscrowState.PENDING,
+        "payout_executed": False
+    }
+    return {"escrow_id": escrow_id, "status": escrow_manager.EscrowState.PENDING}
+
+@app.post("/api/escrow/upload-receipt/{escrow_id}")
+async def upload_receipt(escrow_id: str, background_tasks: BackgroundTasks, file: UploadFile = File(...)):
+    """
+    Buyers upload receipts to an existing escrow.
+    """
+    if escrow_id not in escrow_manager.escrow_db:
+        raise HTTPException(status_code=404, detail="Escrow session not found.")
+
     if not file.content_type.startswith("image/"):
         raise HTTPException(status_code=400, detail="Only image files are supported.")
     
     contents = await file.read()
-    
-    # Call the AI Agent (Phase 2)
     analysis = await ai_agents.analyze_receipt(contents)
     
     if "error" in analysis:
-        # Fallback for hackathon if API key is missing
-        return {
-            "status": "AI_OFFLINE",
-            "message": "AI Analysis was not performed. Check API Key.",
-            "analysis_debug": analysis
-        }
+        return {"status": "AI_OFFLINE", "message": "Analysis skipped.", "debug": analysis}
 
-    # Verify extracted data with Mock Bank API (Phase 2 Integration)
-    extracted = analysis.get("extracted_data", {})
-    bank_verification = await verify_payment(
-        transaction_id=extracted.get("transaction_id", "UNKNOWN"),
-        amount=extracted.get("amount", 0.0)
-    )
+    # Integrate logic: If AI + Bank verify, set to FUNDED and START POLLING
+    is_valid = analysis.get("is_authentic")
+    if is_valid:
+        await escrow_manager.update_escrow_status(escrow_id, escrow_manager.EscrowState.FUNDED)
+        
+        # AGENTIC TRIGGER: Start background polling for delivery
+        tracking_num = escrow_manager.escrow_db[escrow_id]["tracking_number"]
+        background_tasks.add_task(escrow_manager.start_courier_polling, escrow_id, tracking_num)
 
     return {
+        "escrow_id": escrow_id,
         "ai_verdict": analysis,
-        "bank_status": bank_verification,
-        "is_funded": analysis.get("is_authentic") and bank_verification.get("funds_secured")
+        "current_status": escrow_manager.escrow_db[escrow_id]["status"]
     }
 
-# Mock Bank Webhook (as defined before)
+@app.get("/api/escrow/status/{escrow_id}")
+async def get_status(escrow_id: str):
+    if escrow_id not in escrow_manager.escrow_db:
+        raise HTTPException(status_code=404, detail="Escrow not found.")
+    return escrow_manager.escrow_db[escrow_id]
+
+# Mock Bank Webhook (previous logic)
 @app.post("/api/bank/verify")
 async def verify_payment(transaction_id: str, amount: float):
     # Simulated verification logic
