@@ -1,0 +1,34 @@
+{
+  "name": "myai-hackathon-amanahbot",
+  "version": "1.0.0",
+  "description": "**Amanah-Bot** is a Plug-and-Play, Agentic AI Escrow infrastructure designed to eliminate non-delivery and fake payment scams in peer-to-peer (P2P) marketplaces. Built for the **Project 2030 MyAI Future Hackathon (Track 5: FinTech & Security)**.",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Nitezio/myai-hackathon-AmanahBot.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "bugs": {
+    "url": "https://github.com/Nitezio/myai-hackathon-AmanahBot/issues"
+  },
+  "homepage": "https://github.com/Nitezio/myai-hackathon-AmanahBot#readme",
+  "dependencies": {
+    "@genkit-ai/express": "^1.32.0",
+    "@genkit-ai/google-genai": "^1.32.0",
+    "dotenv": "^17.4.2",
+    "genkit": "^1.32.0",
+    "zod": "^4.3.6"
+  },
+  "devDependencies": {
+    "@types/node": "^25.6.0",
+    "genkit-cli": "^1.32.0",
+    "tsx": "^4.21.0",
+    "typescript": "^6.0.3"
+  }
+}
