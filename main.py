@@ -1,27 +1,48 @@
-from fastapi import FastAPI
+from fastapi import FastAPI, UploadFile, File, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 import os
+import ai_agents
 
 app = FastAPI(title="Amanah-Bot EaaS Backend")
 
-# Configure CORS for Flutter Web
-app.add_middleware(
-    CORSMiddleware,
-    allow_origins=["*"],  # For hackathon; update to specific URL in production
-    allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
-)
+# ... existing CORS ...
 
-@app.get("/")
-async def root():
-    return {"message": "Amanah-Bot EaaS Backend is running."}
+@app.post("/api/escrow/upload-receipt")
+async def upload_receipt(file: UploadFile = File(...)):
+    """
+    Endpoint for buyers to upload bank receipts.
+    Integrates Gemini AI for forensics.
+    """
+    if not file.content_type.startswith("image/"):
+        raise HTTPException(status_code=400, detail="Only image files are supported.")
+    
+    contents = await file.read()
+    
+    # Call the AI Agent (Phase 2)
+    analysis = await ai_agents.analyze_receipt(contents)
+    
+    if "error" in analysis:
+        # Fallback for hackathon if API key is missing
+        return {
+            "status": "AI_OFFLINE",
+            "message": "AI Analysis was not performed. Check API Key.",
+            "analysis_debug": analysis
+        }
 
-@app.get("/health")
-async def health_check():
-    return {"status": "ok"}
+    # Verify extracted data with Mock Bank API (Phase 2 Integration)
+    extracted = analysis.get("extracted_data", {})
+    bank_verification = await verify_payment(
+        transaction_id=extracted.get("transaction_id", "UNKNOWN"),
+        amount=extracted.get("amount", 0.0)
+    )
 
-# Mock Bank Webhook
+    return {
+        "ai_verdict": analysis,
+        "bank_status": bank_verification,
+        "is_funded": analysis.get("is_authentic") and bank_verification.get("funds_secured")
+    }
+
+# Mock Bank Webhook (as defined before)
 @app.post("/api/bank/verify")
 async def verify_payment(transaction_id: str, amount: float):
     # Simulated verification logic
