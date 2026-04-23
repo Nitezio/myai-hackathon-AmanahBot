@@ -108,8 +108,14 @@ Amanah-Bot elevates escrow from a standalone app to a scalable **B2B2C infrastru
 
 ---
 
-## 📝 AI Declaration
-This project utilizes **Gemini CLI**, **GitHub Copilot**, and **Gemini 1.5 Pro** for rapid prototyping, architectural design, and automated documentation. All AI-generated code has been reviewed and hardened for security.
+## 📝 AI Declaration & Compliance
+This project utilizes the **Google AI Ecosystem Stack** as its core intelligence engine.
+
+*   **Intelligence:** **Gemini 2.5 Flash Lite** was used for high-speed multimodal receipt forensics and legal-context arbitration.
+*   **Orchestration:** **Firebase Genkit V1** was used to design agentic workflows and automated state transitions.
+*   **Development:** **Gemini CLI** and **GitHub Copilot** were employed for architectural planning, boilerplate generation, and rapid documentation.
+
+**Verification:** All AI-generated code and logic have been rigorously audited for security, prompt injection vulnerabilities, and idiomatic correctness by the human team leads.
 
 ---
 
