@@ -3,7 +3,9 @@ import 'package:http/http.dart' as http;
 import 'package:image_picker/image_picker.dart';
 
 class ApiService {
-  static const String baseUrl = 'http://localhost:8080'; // Change to 10.0.2.2 for Android
+  // Use 10.0.2.2 for Android Emulator, localhost for Web. 
+  // TODO: Update to your Cloud Run URL once deployed.
+  static const String baseUrl = String.fromEnvironment('API_URL', defaultValue: 'http://localhost:8080');
 
   static Future<Map<String, dynamic>> createEscrow(
       String itemName, double price, String trackingNumber) async {
