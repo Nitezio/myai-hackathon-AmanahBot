@@ -32,7 +32,24 @@ class EscrowState:
     DISPUTED = "Disputed"
 
 # In-memory storage
-escrow_db = {}
+escrow_db = {
+    "TX-DEMO-123": {
+        "item": "Jordan 1 Retro High",
+        "price": 450.00,
+        "tracking_number": "JNT-999",
+        "status": EscrowState.PENDING,
+        "ai_verified": False,
+        "payout_executed": False
+    },
+    "TX-DEMO-999": {
+        "item": "Test Item",
+        "price": 50.00,
+        "tracking_number": "POS-888",
+        "status": EscrowState.PENDING,
+        "ai_verified": False,
+        "payout_executed": False
+    }
+}
 
 async def update_escrow_status(escrow_id: str, new_status: str):
     """Updates the state and logs the transition in structured JSON."""
@@ -50,7 +67,7 @@ async def update_escrow_status(escrow_id: str, new_status: str):
     return False
 
 
-async def start_courier_polling(escrow_id: str, tracking_number: str, backend_url: str = "http://localhost:8080"):
+async def start_courier_polling(escrow_id: str, tracking_number: str, backend_url: str = "http://localhost:8000"):
     """
     The Agentic Polling Loop.
     This runs autonomously until the item is delivered.

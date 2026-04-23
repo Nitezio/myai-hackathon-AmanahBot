@@ -4,7 +4,7 @@ class ReasoningBar extends StatelessWidget {
   final String reasoning;
   final bool isAnalyzing;
 
-  const ReasoningBar({required this.reasoning, this.isAnalyzing = false});
+  const ReasoningBar({super.key, required this.reasoning, this.isAnalyzing = false});
 
   @override
   Widget build(BuildContext context) {
@@ -12,7 +12,7 @@ class ReasoningBar extends StatelessWidget {
       width: double.infinity,
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: Colors.black.withOpacity(0.4),
+        color: Colors.black.withValues(alpha: 0.4),
         borderRadius: BorderRadius.circular(12),
         border: Border.all(color: isAnalyzing ? Colors.blueAccent : Colors.white10),
       ),

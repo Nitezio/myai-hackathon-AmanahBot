@@ -218,7 +218,7 @@ export const disputeMediatorFlow = ai.defineFlow(
     console.log(`[AGENT RUNNING] Analyzing dispute...`);
 
     const response = await ai.generate({
-      model: googleAI.model('gemini-2.5-flash-lite'), 
+      model: googleAI.model('gemini-1.5-flash'), 
       output: {
         format: 'json',
         schema: z.object({
