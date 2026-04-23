@@ -103,8 +103,9 @@ We implemented three layers of "Enterprise-Grade" security to satisfy the hackat
 *   **[x] Task 4.4: Prompt Injection Lockdown** (Hardened system mandates).
 *   **[x] Task 4.5: Reasoning & Audit Logs** (AI now outputs step-by-step thinking).
 *   **[x] Task 4.6: Autonomous Proof Run** (Captured logs of the agent acting alone).
-*   **[x] Task 4.7: Intelligent Thresholds**
-    *   Final logic update to auto-dispute transactions where AI confidence is `< 85%`.
+*   **[ ] Task 4.7: Intelligent Thresholds**
+    *   **Action:** Final logic update to auto-dispute transactions where AI confidence is `< 85%`.
+
 
 ---
 
