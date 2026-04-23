@@ -4,6 +4,7 @@
   "description": "**Amanah-Bot** is a Plug-and-Play, Agentic AI Escrow infrastructure designed to eliminate non-delivery and fake payment scams in peer-to-peer (P2P) marketplaces. Built for the **Project 2030 MyAI Future Hackathon (Track 5: FinTech & Security)**.",
   "main": "index.js",
   "scripts": {
+    "start": "tsx src/index.ts",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "repository": {
@@ -22,14 +23,15 @@
     "@genkit-ai/express": "^1.32.0",
     "@genkit-ai/google-genai": "^1.32.0",
     "dotenv": "^17.4.2",
+    "express": "^5.2.1",
     "genkit": "^1.32.0",
-    "zod": "^4.3.6"
+    "zod": "^3.25.76"
   },
   "devDependencies": {
     "@types/node": "^25.6.0",
     "genkit-cli": "^1.32.0",
     "ts-node": "^10.9.2",
     "tsx": "^4.21.0",
-    "typescript": "^6.0.3"
+    "typescript": "^5.3.3"
   }
 }

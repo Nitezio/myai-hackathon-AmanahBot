@@ -8,6 +8,7 @@ import os
 import httpx
 import escrow_manager
 import uuid
+import base64
 
 # --- REQUEST SCHEMAS ---
 class EscrowCreate(BaseModel):
@@ -73,11 +74,10 @@ async def upload_receipt(
     if escrow_id not in escrow_manager.escrow_db:
         raise HTTPException(status_code=404, detail="Escrow session not found.")
 
-    if not file.content_type.startswith("image/"):
+    if not file.content_type or not file.content_type.startswith("image/"):
         raise HTTPException(status_code=400, detail="Only image files are supported.")
     
     contents = await file.read()
-    import base64
     base64_image = f"data:{file.content_type};base64,{base64.b64encode(contents).decode('utf-8')}"
     
     try:
@@ -93,7 +93,12 @@ async def upload_receipt(
                 },
                 timeout=30.0
             )
-            analysis = genkit_resp.json().get("result", {})
+            
+            if genkit_resp.status_code != 200:
+                return {"status": "AI_ERROR", "message": f"AI Server returned status {genkit_resp.status_code}"}
+                
+            genkit_data = genkit_resp.json()
+            analysis = genkit_data.get("result", {})
     except Exception as e:
         return {"status": "BRIDGE_ERROR", "message": f"AI Server Unreachable: {str(e)}"}
 
@@ -142,6 +147,10 @@ async def raise_dispute(escrow_id: str, request: DisputeRequest) -> Dict[str, An
                     }
                 }
             )
+            
+            if genkit_resp.status_code != 200:
+                return {"status": "AI_ERROR", "message": f"AI Mediator returned status {genkit_resp.status_code}"}
+
             resolution = genkit_resp.json().get("result", {})
     except Exception as e:
         return {"status": "BRIDGE_ERROR", "message": f"AI Mediator offline: {str(e)}"}
@@ -149,8 +158,17 @@ async def raise_dispute(escrow_id: str, request: DisputeRequest) -> Dict[str, An
     action = resolution.get("actionToTake")
     if action == "REFUND_BUYER":
         await escrow_manager.update_escrow_status(escrow_id, escrow_manager.EscrowState.DISPUTED)
-    else:
+    elif action == "RELEASE_FUNDS_TO_SELLER":
         await escrow_manager.update_escrow_status(escrow_id, escrow_manager.EscrowState.RELEASED)
+    else:
+        # SAFETY: If AI is unsure or fails, lock the transaction in PENDING or DISPUTED for human review
+        await escrow_manager.update_escrow_status(escrow_id, escrow_manager.EscrowState.DISPUTED)
+        return {
+            "escrow_id": escrow_id,
+            "ai_resolution": resolution,
+            "status": "AI_UNCERTAIN",
+            "message": "AI Mediator could not reach a clear verdict. Escrow locked for manual review."
+        }
 
     return {
         "escrow_id": escrow_id,

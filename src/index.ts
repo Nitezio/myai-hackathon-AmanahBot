@@ -8,6 +8,11 @@ import * as crypto from 'crypto';
 // Load the API Key
 dotenv.config();
 
+if (!process.env.GEMINI_API_KEY) {
+  console.warn("⚠️ WARNING: GEMINI_API_KEY is not set in environment variables.");
+  console.warn("AI flows will fail until a valid API key is provided.");
+}
+
 // Initialize the Genkit V1 Engine
 const ai = genkit({
   plugins: [googleAI({ apiKey: process.env.GEMINI_API_KEY })]
@@ -18,8 +23,8 @@ const ai = genkit({
 // ==========================================
 const mockDatabase = {
   transactions: {
-    "TX-1001": { status: "LOCKED_IN_ESCROW", amount: 50.00, seller_account: "Maybank-1234", receipt_hash: null },
-    "TX-1002": { status: "PENDING_PAYMENT", amount: 150.00, seller_account: "CIMB-5678", receipt_hash: null }
+    "TX-1001": { status: "LOCKED_IN_ESCROW", amount: 50.00, seller_account: "Maybank-1234", receipt_hash: null as string | null },
+    "TX-1002": { status: "PENDING_PAYMENT", amount: 150.00, seller_account: "CIMB-5678", receipt_hash: null as string | null }
   },
   courier_tracking: {
     "JNT-999": { status: "Delivered", last_updated: "Today, 10:00 AM" },
@@ -37,7 +42,7 @@ export const checkCourierStatusTool = ai.defineTool(
     inputSchema: z.object({ trackingNumber: z.string() }),
     outputSchema: z.object({ status: z.string(), message: z.string() }),
   },
-  async (input) => {
+  async (input: { trackingNumber: string }) => {
     console.log(`[DB QUERY] Fetching tracking info for: ${input.trackingNumber}`);
     const record = mockDatabase.courier_tracking[input.trackingNumber as keyof typeof mockDatabase.courier_tracking];
     
@@ -58,7 +63,7 @@ export const releaseFundsTool = ai.defineTool(
     inputSchema: z.object({ transactionId: z.string() }),
     outputSchema: z.object({ success: z.boolean(), new_status: z.string(), message: z.string() }),
   },
-  async (input) => {
+  async (input: { transactionId: string }) => {
     console.log(`[DB UPDATE] Attempting to release funds for TX: ${input.transactionId}`);
     const tx = mockDatabase.transactions[input.transactionId as keyof typeof mockDatabase.transactions];
     
@@ -83,10 +88,15 @@ export const healthCheckFlow = ai.defineFlow(
 // ==========================================
 // AGENT 1: Multimodal Receipt Forensics & Security
 // ==========================================
+interface ReceiptInput {
+  transactionId: string;
+  expectedAmount: string;
+  receiptImageBase64: string;
+}
+
 export const receiptForensicsFlow = ai.defineFlow(
   {
     name: 'analyzeReceipt',
-    description: 'Analyzes a transfer receipt for fraud, extracts metadata, and saves a SHA-256 security hash.',
     inputSchema: z.object({
       transactionId: z.string().describe("The DB transaction ID to link this receipt to, e.g., 'TX-1001'"),
       expectedAmount: z.string().describe("The amount expected, e.g., '50.00'"),
@@ -103,7 +113,7 @@ export const receiptForensicsFlow = ai.defineFlow(
       reasoning: z.string()
     }),
   },
-  async (input) => {
+  async (input: ReceiptInput) => {
     console.log(`[AGENT RUNNING] Analyzing receipt for RM${input.expectedAmount}...`);
 
     // 🔒 SECURITY LAYER: Calculate SHA-256
@@ -113,12 +123,12 @@ export const receiptForensicsFlow = ai.defineFlow(
     // 🗄️ DATABASE LAYER: Grab the record
     const txRecord = mockDatabase.transactions[input.transactionId as keyof typeof mockDatabase.transactions];
     if (txRecord) {
-      txRecord.receipt_hash = fileHash as any;
+      txRecord.receipt_hash = fileHash;
       console.log(`[DB UPDATE] Saved receipt hash to database for ${input.transactionId}`);
     }
 
     const response = await ai.generate({
-      model: googleAI.model('gemini-2.5-flash-lite'), 
+      model: googleAI.model('gemini-1.5-flash'), 
       output: {
         format: 'json',
         schema: z.object({
@@ -143,8 +153,10 @@ export const receiptForensicsFlow = ai.defineFlow(
       ],
     });
 
-    // Extract the AI's decision
-    const finalDecision = response.output as any;
+    const finalDecision = response.output;
+    if (!finalDecision) {
+      throw new Error("AI failed to analyze receipt.");
+    }
 
     // 🚨 TASK 4.7: THE INTELLIGENT THRESHOLD RULE (< 85%)
     if (finalDecision.confidence_score < 85) {
@@ -174,7 +186,7 @@ export const receiptForensicsFlow = ai.defineFlow(
 
     return {
       receipt_hash: fileHash, 
-      ...finalDecision 
+      ...finalDecision
     };
   }
 );
@@ -182,10 +194,15 @@ export const receiptForensicsFlow = ai.defineFlow(
 // ==========================================
 // AGENT 2: AI Dispute Mediator
 // ==========================================
+interface DisputeInput {
+  buyerComplaint: string;
+  sellerResponse: string;
+  chatLogs: string;
+}
+
 export const disputeMediatorFlow = ai.defineFlow(
   {
     name: 'resolveDispute',
-    description: 'Reads chat logs and evidence to resolve disputes autonomously.',
     inputSchema: z.object({
       buyerComplaint: z.string(),
       sellerResponse: z.string(),
@@ -197,7 +214,7 @@ export const disputeMediatorFlow = ai.defineFlow(
       actionToTake: z.enum(["REFUND_BUYER", "RELEASE_FUNDS_TO_SELLER"])
     })
   },
-  async (input) => {
+  async (input: DisputeInput) => {
     console.log(`[AGENT RUNNING] Analyzing dispute...`);
 
     const response = await ai.generate({
@@ -220,10 +237,14 @@ export const disputeMediatorFlow = ai.defineFlow(
       Logs: ${input.chatLogs}`
     });
 
+    if (!response.output) {
+      throw new Error("AI failed to resolve dispute.");
+    }
+
     console.log(`\n⚖️ [AI MEDIATOR VERDICT]`);
-    console.log(`   Winner: ${response.output?.winner}`);
-    console.log(`   Action: ${response.output?.actionToTake}`);
-    console.log(`   Reasoning: ${response.output?.reasoning}`);
+    console.log(`   Winner: ${response.output.winner}`);
+    console.log(`   Action: ${response.output.actionToTake}`);
+    console.log(`   Reasoning: ${response.output.reasoning}`);
     console.log(`------------------------------------------\n`);
 
     return response.output;
@@ -238,3 +259,4 @@ startFlowServer({
 });
 
 console.log("🔥 Amanah-Bot Genkit Server is LIVE on Port 3400!");
+

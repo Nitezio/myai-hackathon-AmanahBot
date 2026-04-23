@@ -38,6 +38,9 @@ async def update_escrow_status(escrow_id: str, new_status: str):
     """Updates the state and logs the transition in structured JSON."""
     if escrow_id in escrow_db:
         old_status = escrow_db[escrow_id]["status"]
+        if old_status == new_status:
+            return True
+            
         escrow_db[escrow_id]["status"] = new_status
         logger.info(
             f"State Transition: {old_status} -> {new_status}", 
