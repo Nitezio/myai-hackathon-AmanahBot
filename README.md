@@ -109,7 +109,7 @@ As per the **Project 2030 MyAI Future Hackathon** mandates, this project utilize
 *   **[x] Task 4.4: Prompt Injection Lockdown** (Hardened system mandates).
 *   **[x] Task 4.5: Reasoning & Audit Logs** (AI now outputs step-by-step thinking).
 *   **[x] Task 4.6: Autonomous Proof Run** (Captured logs of the agent acting alone).
-*   **[ ] Task 4.7: Intelligent Thresholds**
+*   **[x] Task 4.7: Intelligent Thresholds**
     *   **Action:** Final logic update to auto-dispute transactions where AI confidence is `< 85%`.
 
 ---

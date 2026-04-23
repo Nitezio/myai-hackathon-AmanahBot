@@ -33,7 +33,6 @@ async def validation_exception_handler(request, exc):
         content={"status": "INVALID_INPUT", "message": "Malformed request structure detected."}
     )
 
-# CORS: Essential for Flutter Web integration
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"], 
@@ -42,24 +41,18 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# Genkit Node.js Server URL (The Intelligence Hub)
 GENKIT_URL: str = os.environ.get("GENKIT_URL", "http://localhost:3400")
 
 @app.get("/")
 async def root() -> Dict[str, str]:
-    """Returns a basic greeting to confirm server status."""
     return {"message": "Amanah-Bot EaaS Backend is running."}
 
 @app.get("/health")
 async def health_check() -> Dict[str, str]:
-    """PUBLIC: Cloud Run health probe for container monitoring."""
     return {"status": "ok"}
 
 @app.post("/api/escrow/create")
 async def create_escrow(request: EscrowCreate) -> Dict[str, str]:
-    """
-    Initializes a new zero-trust escrow session.
-    """
     escrow_id = str(uuid.uuid4())[:8]
     escrow_manager.escrow_db[escrow_id] = {
         "item": request.item_name,
@@ -77,9 +70,6 @@ async def upload_receipt(
     background_tasks: BackgroundTasks, 
     file: UploadFile = File(...)
 ) -> Dict[str, Any]:
-    """
-    Accepts a receipt image and bridges it to Genkit for analysis.
-    """
     if escrow_id not in escrow_manager.escrow_db:
         raise HTTPException(status_code=404, detail="Escrow session not found.")
 
@@ -90,7 +80,6 @@ async def upload_receipt(
     import base64
     base64_image = f"data:{file.content_type};base64,{base64.b64encode(contents).decode('utf-8')}"
     
-    # BRIDGE: Call Genkit Node.js AI Engine
     try:
         async with httpx.AsyncClient() as client:
             genkit_resp = await client.post(
@@ -108,13 +97,21 @@ async def upload_receipt(
     except Exception as e:
         return {"status": "BRIDGE_ERROR", "message": f"AI Server Unreachable: {str(e)}"}
 
-    # ZERO-TRUST ACTION: Trigger autonomous polling ONLY if AI confirms receipt pixels are authentic
-    if analysis.get("is_authentic"):
+    # --- TASK 4.7: INTELLIGENT THRESHOLDS (< 85%) ---
+    is_authentic = analysis.get("is_authentic", False)
+    confidence = analysis.get("confidence_score", 0)
+
+    if is_authentic and confidence >= 85:
+        # SUCCESS: Meet safety standards
         escrow_manager.escrow_db[escrow_id]["ai_verified"] = True
         await escrow_manager.update_escrow_status(escrow_id, escrow_manager.EscrowState.FUNDED)
         
         tracking_num = escrow_manager.escrow_db[escrow_id]["tracking_number"]
         background_tasks.add_task(escrow_manager.start_courier_polling, escrow_id, tracking_num)
+    else:
+        # FAIL-SAFE: Auto-Dispute if AI is unsure or suspicious
+        await escrow_manager.update_escrow_status(escrow_id, escrow_manager.EscrowState.DISPUTED)
+        escrow_manager.escrow_db[escrow_id]["final_verdict"] = f"Auto-Disputed: Low AI Confidence ({confidence}%)"
 
     return {
         "escrow_id": escrow_id,
@@ -124,16 +121,12 @@ async def upload_receipt(
 
 @app.get("/api/escrow/status/{escrow_id}")
 async def get_status(escrow_id: str) -> Dict[str, Any]:
-    """Returns the real-time state of an escrow session."""
     if escrow_id not in escrow_manager.escrow_db:
         raise HTTPException(status_code=404, detail="Escrow not found.")
     return escrow_manager.escrow_db[escrow_id]
 
 @app.post("/api/escrow/dispute/{escrow_id}")
 async def raise_dispute(escrow_id: str, request: DisputeRequest) -> Dict[str, Any]:
-    """
-    Triggers the NLP Dispute Mediator to settle conflict autonomously.
-    """
     if escrow_id not in escrow_manager.escrow_db:
         raise HTTPException(status_code=404, detail="Escrow not found.")
 
