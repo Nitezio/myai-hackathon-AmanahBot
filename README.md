@@ -40,27 +40,71 @@ We implemented three layers of "Enterprise-Grade" security to satisfy the hackat
 
 ---
 
-## 📋 Role-Based Master Checklist
+## 📋 Official Master Team Checklist
 
-### **Frontend Architect (Flutter Web)** - *IN PROGRESS*
-- [ ] Initialize responsive Flutter Web project (Mobile-Optimized).
-- [ ] Build **Checkout Link Screen** (`/pay/{id}`) with FileUpload.
-- [ ] Implement **Live Reasoning Bar** (Displays the AI's "Chain of Thought" string).
-- [ ] Connect to Backend via `API_HANDOFF.md` specs.
+### **1. Project Manager & Pitch Strategist**
+*Focus: Strategic alignment, revenue model, and securing the 30 marks for Innovation, Impact, and Pitch.*
 
-### **Backend & Cloud Lead (YOU)** - *100% DONE*
-- [x] Build Hybrid Foundation (FastAPI + Genkit Bridge).
-- [x] Implement Mock APIs & Health Checks.
-- [x] Dockerize both services (Multi-Container ready).
-- [x] Polish Code: Type hints, Pydantic models, and production Docstrings.
-- [x] **Verified:** End-to-End Success Path & Bridge Latency.
+*   **[ ] Task 1.1: Official Registration (URGENT)**
+    *   Submit the Google Form by **Tonight 11:59 PM**.
+    *   Ensure all team member GitHub profiles are correctly linked.
+*   **[ ] Task 1.2: 15-Slide Pitch Deck (PDF)**
+    *   **The Problem:** Focus on RM50-200 social commerce fraud in Malaysia (WhatsApp/Instagram niche).
+    *   **The Pivot:** Explain "Escrow-as-a-Service" (EaaS) as a plug-and-play widget for any platform.
+    *   **The Business Model:** Detail the 1.5% micro-fee revenue structure.
+    *   **National Impact:** Align with Malaysia Madani / MyDIGITAL blueprints.
+*   **[ ] Task 1.3: 3-Minute Video Demo**
+    *   Script a flow: Link Generation $\rightarrow$ AI Receipt Check $\rightarrow$ Agentic Polling $\rightarrow$ Auto-Release.
+    *   Record a clean walkthrough of the working prototype.
+*   **[ ] Task 1.4: Final Portal Submission**
+    *   Finalize: GitHub URL, Cloud Run URL, Video Link, and Deck PDF.
 
-### **Agentic Workflow & Security Lead (YOU)** - *100% DONE*
-- [x] Engineer Multimodal Forensic Flow (Gemini 2.5 Flash Lite).
-- [x] Engineer NLP Arbitration Flow (AI Mediator).
-- [x] Implement Zero-Trust double-condition payout logic.
-- [x] Harden prompts against instruction-override attacks.
-- [x] Implement 85% Confidence Threshold Fail-Safe.
+---
+
+### **2. Frontend Architect (Flutter Web)**
+*Focus: 10 marks for UI/UX. Currently the project's critical path (0% done).*
+
+*   **[ ] Task 2.1: Flutter Web Initialization**
+    *   Create a responsive project optimized for embedded mobile browsers (WhatsApp/Instagram).
+*   **[ ] Task 2.2: The "Secure Checkout" Screen (`/pay/{id}`)**
+    *   Build a sleek UI for item details and a FileUpload widget for receipts.
+    *   **The "Wow" Feature:** Create a status bar that displays the AI's "Reasoning" string in real-time.
+*   **[ ] Task 2.3: Seller dashboard**
+    *   Simple interface to input item details and generate shareable escrow links.
+*   **[ ] Task 2.4: Dispute Resolution Interface**
+    *   UI for evidence upload and viewing the "AI Mediator" final verdict.
+*   **[ ] Task 2.5: Backend Integration**
+    *   Connect the UI to the Python Gateway (Port 8080) using the `API_HANDOFF.md` specifications.
+
+---
+
+### **3. Backend & Cloud Lead**
+*Focus: Infrastructure, Security, and Code Quality. Status: 90% done.*
+
+*   **[x] Task 3.1: Hybrid Engine Bridge** (FastAPI bridged to Genkit Node.js).
+*   **[x] Task 3.2: Multi-Service Containerization** (Both Dockerfiles ready and hardened).
+*   **[x] Task 3.3: Deployment Automation** (Created `deploy_to_gcp.sh`).
+*   **[x] Task 3.4: Code Polish & Type Safety** (Added Pydantic models and full docstrings).
+*   **[x] Task 3.5: API Documentation** (Created `API_HANDOFF.md`).
+*   **[ ] Task 3.6: Cloud Run Deployment (BLOCKER: Credits)**
+    *   Deploy both services to GCP once credits are redeemed.
+    *   Provision `GEMINI_API_KEY` in **GCP Secret Manager** (Mandatory for security marks).
+*   **[ ] Task 3.7: Cross-Service Cloud Link**
+    *   Update the Python service `GENKIT_URL` with the live Cloud Run URL of the AI server.
+
+---
+
+### **4. Agentic Workflow & Security Lead**
+*Focus: 25 marks for AI Implementation. Status: 100% done.*
+
+*   **[x] Task 4.1: Multimodal Forensic Flows** (Gemini 2.5 Flash Lite receipt checks).
+*   **[x] Task 4.2: NLP Dispute Mediator** (Unbiased legal arbitration flow).
+*   **[x] Task 4.3: Zero-Trust Guardrails** (Double-condition payout: AI Verified + Delivered).
+*   **[x] Task 4.4: Prompt Injection Lockdown** (Hardened system mandates).
+*   **[x] Task 4.5: Reasoning & Audit Logs** (AI now outputs step-by-step thinking).
+*   **[x] Task 4.6: Autonomous Proof Run** (Captured logs of the agent acting alone).
+*   **[x] Task 4.7: Intelligent Thresholds**
+    *   Final logic update to auto-dispute transactions where AI confidence is `< 85%`.
 
 ---
 
