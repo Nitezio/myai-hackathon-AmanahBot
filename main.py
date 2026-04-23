@@ -108,12 +108,20 @@ async def upload_receipt(
         return {"status": "BRIDGE_ERROR", "message": f"AI Server Unreachable: {str(e)}"}
 
     # ZERO-TRUST ACTION: Trigger autonomous polling ONLY if AI confirms receipt pixels are authentic
-    if analysis.get("is_authentic"):
+    # AND confidence score is above the 85% safety threshold
+    is_authentic = analysis.get("is_authentic", False)
+    confidence = analysis.get("confidence_score", 0)
+
+    if is_authentic and confidence >= 85:
         escrow_manager.escrow_db[escrow_id]["ai_verified"] = True
         await escrow_manager.update_escrow_status(escrow_id, escrow_manager.EscrowState.FUNDED)
         
         tracking_num = escrow_manager.escrow_db[escrow_id]["tracking_number"]
         background_tasks.add_task(escrow_manager.start_courier_polling, escrow_id, tracking_num)
+    else:
+        # FAIL-SAFE: If AI is unsure, automatically flag for human/arbitrator review
+        await escrow_manager.update_escrow_status(escrow_id, escrow_manager.EscrowState.DISPUTED)
+        escrow_manager.escrow_db[escrow_id]["final_verdict"] = f"Flagged by AI (Confidence: {confidence}%)"
 
     return {
         "escrow_id": escrow_id,
