@@ -1,14 +1,22 @@
-# --- STAGE 1: Build Node.js AI Engine ---
+# --- STAGE 1: Build Flutter Web ---
+FROM debant/flutter:3.24.3 AS flutter-build
+WORKDIR /app/amanah_ui
+COPY amanah_ui/pubspec.* ./
+RUN flutter pub get
+COPY amanah_ui/ .
+RUN flutter build web --release
+
+# --- STAGE 2: Build Node.js AI Engine ---
 FROM node:20-slim AS node-build
 WORKDIR /app
 COPY package*.json ./
 RUN npm install
 COPY . .
 
-# --- STAGE 2: Final Unified Container ---
+# --- STAGE 3: Final Unified Container ---
 FROM python:3.10-slim
 
-# Install Node.js runtime into the Python image
+# Install Node.js runtime
 RUN apt-get update && apt-get install -y curl && \
     curl -fsSL https://deb.nodesource.com/setup_20.x | bash - && \
     apt-get install -y nodejs && \
@@ -16,19 +24,19 @@ RUN apt-get update && apt-get install -y curl && \
 
 WORKDIR /app
 
-# Copy Python dependencies and install
+# Copy Python dependencies
 COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
-# Copy everything else (Node modules from Stage 1 and Source)
+# Copy built Flutter web files to 'ui_build'
+COPY --from=flutter-build /app/amanah_ui/build/web /app/ui_build
+
+# Copy Node source and app code
 COPY --from=node-build /app /app
 
-# Expose the ports
+# Expose ports
 EXPOSE 8080
 EXPOSE 3400
 
-# Ensure the startup script is executable
 RUN chmod +x start.sh
-
-# Start both engines using the script
 CMD ["./start.sh"]

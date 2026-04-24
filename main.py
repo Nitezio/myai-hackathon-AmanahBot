@@ -184,6 +184,10 @@ async def raise_dispute(escrow_id: str, request: DisputeRequest) -> Dict[str, An
         "new_status": escrow_manager.escrow_db[escrow_id]["status"]
     }
 
+# --- MOUNT UI (Must be at the very bottom) ---
+if os.path.exists("ui_build"):
+    app.mount("/", StaticFiles(directory="ui_build", html=True), name="ui")
+
 if __name__ == "__main__":
     import uvicorn
     uvicorn.run(app, host="0.0.0.0", port=8080)

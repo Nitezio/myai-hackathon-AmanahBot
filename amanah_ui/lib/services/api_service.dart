@@ -3,9 +3,15 @@ import 'package:http/http.dart' as http;
 import 'package:image_picker/image_picker.dart';
 import 'package:http_parser/http_parser.dart';
 
+import 'dart:html' as html; // Added for domain detection
+
 class ApiService {
-  // Standardized port 8080 for FastAPI Bridge
-  static const String baseUrl = String.fromEnvironment('API_URL', defaultValue: 'http://localhost:8080');
+  // Automatically uses the domain it's hosted on (e.g., your Cloud Run URL)
+  static String get baseUrl {
+    final String origin = html.window.location.origin;
+    // If running locally, default to 8080. If in cloud, use the cloud URL.
+    return origin.contains('localhost') ? 'http://localhost:8080' : origin;
+  }
 
   static Future<Map<String, dynamic>> createEscrow(
       String itemName, double price, String trackingNumber) async {
