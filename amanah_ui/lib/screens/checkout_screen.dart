@@ -1,9 +1,9 @@
 import 'dart:async';
-import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import '../widgets/reasoning_bar.dart';
 import '../services/api_service.dart';
+import '../widgets/glass_card.dart';
 
 class CheckoutScreen extends StatefulWidget {
   final String? escrowId;
@@ -78,30 +78,17 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
     return Scaffold(
       body: Stack(
         children: [
-          Positioned(
-            top: -100,
-            left: -100,
-            child: Container(
-              width: 300,
-              height: 300,
-              decoration: BoxDecoration(
-                shape: BoxShape.circle,
-                color: const Color(0xFF3B82F6).withValues(alpha: 0.15),
+          // Background Gradient (Light Grey)
+          Container(
+            decoration: const BoxDecoration(
+              gradient: LinearGradient(
+                begin: Alignment.topCenter,
+                end: Alignment.bottomCenter,
+                colors: [
+                  Color(0xFFF3F4F6),
+                  Color(0xFFE5E7EB),
+                ],
               ),
-              child: BackdropFilter(filter: ImageFilter.blur(sigmaX: 100, sigmaY: 100), child: Container()),
-            ),
-          ),
-          Positioned(
-            bottom: 100,
-            right: -50,
-            child: Container(
-              width: 250,
-              height: 250,
-              decoration: BoxDecoration(
-                shape: BoxShape.circle,
-                color: const Color(0xFF06B6D4).withValues(alpha: 0.1),
-              ),
-              child: BackdropFilter(filter: ImageFilter.blur(sigmaX: 80, sigmaY: 80), child: Container()),
             ),
           ),
           SafeArea(
@@ -114,13 +101,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                   const SizedBox(height: 32),
                   Text(
                     "Secure Escrow\nPayment",
-                    style: Theme.of(context).textTheme.displayLarge?.copyWith(
-                      height: 1.1,
-                      foreground: Paint()
-                        ..shader = const LinearGradient(
-                          colors: [Colors.white, Colors.white70],
-                        ).createShader(const Rect.fromLTWH(0, 0, 200, 70)),
-                    ),
+                    style: Theme.of(context).textTheme.displayLarge,
                   ),
                   const SizedBox(height: 12),
                   Text(
@@ -132,15 +113,15 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                   const SizedBox(height: 32),
                   _buildActionButton(),
                   const SizedBox(height: 40),
-                  const Center(
+                  Center(
                     child: Row(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
-                        Icon(Icons.lock_outline, size: 12, color: Colors.white24),
-                        SizedBox(width: 4),
+                        Icon(Icons.lock_outline, size: 12, color: const Color(0xFF1D1D1B).withValues(alpha: 0.2)),
+                        const SizedBox(width: 4),
                         Text(
                           "256-BIT ENCRYPTED ZERO-TRUST PROTOCOL",
-                          style: TextStyle(color: Colors.white24, fontSize: 10, letterSpacing: 1.5, fontWeight: FontWeight.bold),
+                          style: TextStyle(color: const Color(0xFF1D1D1B).withValues(alpha: 0.2), fontSize: 10, letterSpacing: 1.5, fontWeight: FontWeight.bold),
                         ),
                       ],
                     ),
@@ -183,25 +164,19 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
             ),
           ],
         ),
-        ClipRRect(
-          borderRadius: BorderRadius.circular(20),
-          child: BackdropFilter(
-            filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
-            child: Container(
-              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-              decoration: BoxDecoration(
-                color: Colors.white.withValues(alpha: 0.05),
-                borderRadius: BorderRadius.circular(20),
-                border: Border.all(color: Colors.white.withValues(alpha: 0.1)),
-              ),
-              child: const Row(
-                children: [
-                  Icon(Icons.verified_user_outlined, size: 14, color: Colors.greenAccent),
-                  SizedBox(width: 4),
-                  Text("VERIFIED", style: TextStyle(color: Colors.greenAccent, fontSize: 10, fontWeight: FontWeight.bold)),
-                ],
-              ),
-            ),
+        Container(
+          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+          decoration: BoxDecoration(
+            color: Colors.white.withValues(alpha: 0.4),
+            borderRadius: BorderRadius.circular(20),
+            border: Border.all(color: Colors.white.withValues(alpha: 0.3)),
+          ),
+          child: const Row(
+            children: [
+              Icon(Icons.verified_user_outlined, size: 14, color: Color(0xFF10B981)),
+              SizedBox(width: 4),
+              Text("VERIFIED", style: TextStyle(color: Color(0xFF10B981), fontSize: 10, fontWeight: FontWeight.bold)),
+            ],
           ),
         ),
       ],
@@ -209,97 +184,88 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
   }
 
   Widget _buildStatusCard() {
-    return ClipRRect(
-      borderRadius: BorderRadius.circular(28),
-      child: BackdropFilter(
-        filter: ImageFilter.blur(sigmaX: 15, sigmaY: 15),
-        child: Container(
-          width: double.infinity,
-          decoration: BoxDecoration(
-            color: const Color(0xFF0F172A).withValues(alpha: 0.6),
-            borderRadius: BorderRadius.circular(28),
-            border: Border.all(color: Colors.white.withValues(alpha: 0.1)),
-          ),
-          child: Column(
-            children: [
-              Container(
-                padding: const EdgeInsets.all(24),
-                child: Column(
+    return GlassCard(
+      isInteractive: true,
+      child: Column(
+        children: [
+          Container(
+            padding: const EdgeInsets.all(24),
+            child: Column(
+              children: [
+                Row(
                   children: [
-                    Row(
-                      children: [
-                        Container(
-                          width: 60,
-                          height: 60,
-                          decoration: BoxDecoration(
-                            color: Colors.white.withValues(alpha: 0.05),
-                            borderRadius: BorderRadius.circular(16),
-                            border: Border.all(color: Colors.white.withValues(alpha: 0.05)),
-                          ),
-                          child: const Icon(Icons.inventory_2_outlined, color: Colors.white70, size: 30),
-                        ),
-                        const SizedBox(width: 16),
-                        Expanded(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(
-                                widget.escrowId?.toUpperCase() ?? "NEW ESCROW",
-                                style: const TextStyle(color: Colors.blueAccent, fontSize: 10, fontWeight: FontWeight.w900, letterSpacing: 1),
-                              ),
-                              const Text(
-                                "Jordan 1 Retro High",
-                                style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.white),
-                              ),
-                            ],
-                          ),
-                        ),
-                      ],
+                    Container(
+                      width: 60,
+                      height: 60,
+                      decoration: BoxDecoration(
+                        color: const Color(0xFF1D1D1B).withValues(alpha: 0.05),
+                        borderRadius: BorderRadius.circular(16),
+                      ),
+                      child: const Icon(Icons.inventory_2_outlined, color: Color(0xFF1D1D1B), size: 30),
                     ),
-                    const SizedBox(height: 24),
-                    const Divider(color: Colors.white10, height: 1),
-                    const SizedBox(height: 24),
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      crossAxisAlignment: CrossAxisAlignment.end,
-                      children: [
-                        const Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text("TOTAL AMOUNT", style: TextStyle(color: Colors.white30, fontSize: 10, fontWeight: FontWeight.bold, letterSpacing: 1)),
-                            SizedBox(height: 4),
-                            Text("RM 450.00", style: TextStyle(fontSize: 32, fontWeight: FontWeight.w900, color: Colors.white)),
-                          ],
-                        ),
-                        AnimatedSwitcher(
-                          duration: const Duration(milliseconds: 300),
-                          child: Chip(
-                            key: ValueKey(_status),
-                            label: Text(
-                              _status.replaceAll("_", " "),
-                              style: const TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: Colors.white),
-                            ),
-                            backgroundColor: _status == "Released" ? Colors.green.withValues(alpha: 0.2) : Colors.blueAccent.withValues(alpha: 0.2),
-                            side: BorderSide(color: _status == "Released" ? Colors.greenAccent.withValues(alpha: 0.3) : Colors.blueAccent.withValues(alpha: 0.3)),
-                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                    const SizedBox(width: 16),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            widget.escrowId?.toUpperCase() ?? "NEW ESCROW",
+                            style: TextStyle(color: const Color(0xFF1D1D1B).withValues(alpha: 0.5), fontSize: 10, fontWeight: FontWeight.w900, letterSpacing: 1),
                           ),
-                        ),
-                      ],
+                          const Text(
+                            "Jordan 1 Retro High",
+                            style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Color(0xFF1D1D1B)),
+                          ),
+                        ],
+                      ),
                     ),
                   ],
                 ),
-              ),
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 20),
-                decoration: BoxDecoration(
-                  color: Colors.white.withValues(alpha: 0.02),
-                  border: Border(top: BorderSide(color: Colors.white.withValues(alpha: 0.05))),
+                const SizedBox(height: 24),
+                Divider(color: const Color(0xFF1D1D1B).withValues(alpha: 0.05), height: 1),
+                const SizedBox(height: 24),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  crossAxisAlignment: CrossAxisAlignment.end,
+                  children: [
+                    Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text("TOTAL AMOUNT", style: TextStyle(color: const Color(0xFF1D1D1B).withValues(alpha: 0.3), fontSize: 10, fontWeight: FontWeight.bold, letterSpacing: 1)),
+                        const SizedBox(height: 4),
+                        const Text("RM 450.00", style: TextStyle(fontSize: 32, fontWeight: FontWeight.w900, color: Color(0xFF1D1D1B))),
+                      ],
+                    ),
+                    AnimatedSwitcher(
+                      duration: const Duration(milliseconds: 300),
+                      child: Container(
+                        key: ValueKey(_status),
+                        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                        decoration: BoxDecoration(
+                          color: _status == "Released" ? const Color(0xFF10B981).withValues(alpha: 0.1) : const Color(0xFF1D1D1B).withValues(alpha: 0.05),
+                          borderRadius: BorderRadius.circular(8),
+                          border: Border.all(color: _status == "Released" ? const Color(0xFF10B981).withValues(alpha: 0.2) : const Color(0xFF1D1D1B).withValues(alpha: 0.1)),
+                        ),
+                        child: Text(
+                          _status.replaceAll("_", " "),
+                          style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: _status == "Released" ? const Color(0xFF10B981) : const Color(0xFF1D1D1B)),
+                        ),
+                      ),
+                    ),
+                  ],
                 ),
-                child: ReasoningBar(reasoning: _reasoning, isAnalyzing: _isAnalyzing),
-              ),
-            ],
+              ],
+            ),
           ),
-        ),
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 20),
+            decoration: BoxDecoration(
+              color: const Color(0xFF1D1D1B).withValues(alpha: 0.02),
+              border: Border(top: BorderSide(color: const Color(0xFF1D1D1B).withValues(alpha: 0.05))),
+            ),
+            child: ReasoningBar(reasoning: _reasoning, isAnalyzing: _isAnalyzing),
+          ),
+        ],
       ),
     );
   }
@@ -307,11 +273,11 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
   Widget _buildActionButton() {
     return Container(
       decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(16),
+        borderRadius: BorderRadius.circular(20),
         boxShadow: [
           if (_status == "Payment_Pending")
             BoxShadow(
-              color: const Color(0xFF3B82F6).withValues(alpha: 0.3),
+              color: const Color(0xFF1D1D1B).withValues(alpha: 0.05),
               blurRadius: 20,
               offset: const Offset(0, 10),
             ),
@@ -319,8 +285,8 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
       ),
       child: ElevatedButton(
         style: ElevatedButton.styleFrom(
-          backgroundColor: const Color(0xFF3B82F6),
-          disabledBackgroundColor: Colors.white.withValues(alpha: 0.05),
+          backgroundColor: const Color(0xFF1D1D1B),
+          disabledBackgroundColor: const Color(0xFF1D1D1B).withValues(alpha: 0.05),
         ),
         onPressed: _status == "Payment_Pending" ? _pickAndUpload : null,
         child: Row(

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:google_fonts/google_fonts.dart';
 import 'screens/home_navigation.dart';
 
 void main() {
@@ -15,52 +16,79 @@ class AmanahBotApp extends StatelessWidget {
       title: 'Amanah-Bot EaaS',
       theme: ThemeData(
         useMaterial3: true,
-        brightness: Brightness.dark,
-        scaffoldBackgroundColor: const Color(0xFF010208), // Near black
-        fontFamily: 'Inter', // High-end typography
+        brightness: Brightness.light,
+        scaffoldBackgroundColor: const Color(0xFFF3F4F6), // Light Grey
+        fontFamily: GoogleFonts.inter().fontFamily,
         colorScheme: ColorScheme.fromSeed(
-          seedColor: const Color(0xFF6366F1), // Indigo
-          brightness: Brightness.dark,
+          seedColor: const Color(0xFF1D1D1B),
+          brightness: Brightness.light,
         ).copyWith(
-          primary: const Color(0xFF6366F1),
-          secondary: const Color(0xFF8B5CF6), // Purple
-          tertiary: const Color(0xFF10B981), // Emerald
-          surface: const Color(0xFF030712),
-          onSurface: Colors.white,
+          primary: const Color(0xFF1D1D1B), // Deep Ink
+          secondary: const Color(0xFF64748B), // Slate
+          surface: Colors.white.withValues(alpha: 0.4),
+          onSurface: const Color(0xFF1D1D1B),
         ),
-        textTheme: const TextTheme(
-          displayLarge: TextStyle(fontSize: 40, fontWeight: FontWeight.w900, letterSpacing: -1.5, color: Colors.white),
-          headlineMedium: TextStyle(fontSize: 28, fontWeight: FontWeight.w800, color: Colors.white),
-          bodyLarge: TextStyle(fontSize: 16, color: Colors.white70, height: 1.5),
-          labelLarge: TextStyle(fontSize: 13, fontWeight: FontWeight.w900, letterSpacing: 2.0),
+        textTheme: GoogleFonts.loraTextTheme().copyWith(
+          displayLarge: GoogleFonts.lora(
+            fontSize: 40, 
+            fontWeight: FontWeight.w900, 
+            letterSpacing: -1.5, 
+            color: const Color(0xFF1D1D1B),
+          ),
+          headlineMedium: GoogleFonts.lora(
+            fontSize: 28, 
+            fontWeight: FontWeight.w800, 
+            color: const Color(0xFF1D1D1B),
+          ),
+          bodyLarge: GoogleFonts.inter(
+            fontSize: 16, 
+            color: const Color(0xFF1D1D1B).withValues(alpha: 0.8), 
+            height: 1.5,
+          ),
+          labelLarge: GoogleFonts.inter(
+            fontSize: 13, 
+            fontWeight: FontWeight.w900, 
+            letterSpacing: 2.0,
+            color: const Color(0xFF1D1D1B),
+          ),
         ),
         appBarTheme: const AppBarTheme(
           backgroundColor: Colors.transparent,
           elevation: 0,
           centerTitle: true,
-          titleTextStyle: TextStyle(fontSize: 14, fontWeight: FontWeight.w900, letterSpacing: 4, color: Colors.white70),
+          titleTextStyle: TextStyle(
+            fontSize: 14, 
+            fontWeight: FontWeight.w900, 
+            letterSpacing: 4, 
+            color: Color(0xFF1D1D1B),
+          ),
         ),
         elevatedButtonTheme: ElevatedButtonThemeData(
           style: ElevatedButton.styleFrom(
-            backgroundColor: const Color(0xFF6366F1),
+            backgroundColor: const Color(0xFF1D1D1B),
             foregroundColor: Colors.white,
             minimumSize: const Size(double.infinity, 60),
             shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-            elevation: 8,
-            shadowColor: const Color(0xFF6366F1).withValues(alpha: 0.3),
-            textStyle: const TextStyle(fontWeight: FontWeight.w900, fontSize: 16, letterSpacing: 0.5),
+            elevation: 0,
+            textStyle: GoogleFonts.inter(fontWeight: FontWeight.w900, fontSize: 16, letterSpacing: 0.5),
           ),
         ),
         inputDecorationTheme: InputDecorationTheme(
           filled: true,
-          fillColor: Colors.white.withValues(alpha: 0.03),
-          border: OutlineInputBorder(borderRadius: BorderRadius.circular(20), borderSide: BorderSide.none),
-          enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(20), borderSide: BorderSide.none),
+          fillColor: Colors.white.withValues(alpha: 0.4),
+          border: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(20), 
+            borderSide: BorderSide(color: Colors.white.withValues(alpha: 0.3)),
+          ),
+          enabledBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(20), 
+            borderSide: BorderSide(color: Colors.white.withValues(alpha: 0.3)),
+          ),
           focusedBorder: OutlineInputBorder(
             borderRadius: BorderRadius.circular(20), 
-            borderSide: const BorderSide(color: Color(0xFF6366F1), width: 2)
+            borderSide: const BorderSide(color: Color(0xFF1D1D1B), width: 1.5),
           ),
-          hintStyle: const TextStyle(color: Colors.white24),
+          hintStyle: TextStyle(color: const Color(0xFF1D1D1B).withValues(alpha: 0.3)),
         ),
       ),
       home: const HomeNavigation(),

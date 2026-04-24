@@ -1,6 +1,7 @@
 import 'dart:ui';
 import 'package:flutter/material.dart';
 import '../services/api_service.dart';
+import '../widgets/glass_card.dart';
 
 class DisputeChatScreen extends StatefulWidget {
   const DisputeChatScreen({super.key});
@@ -64,18 +65,17 @@ class _DisputeChatScreenState extends State<DisputeChatScreen> {
     return Scaffold(
       body: Stack(
         children: [
-          // Background Glow for Depth
-          Positioned(
-            bottom: -50,
-            left: -50,
-            child: Container(
-              width: 300,
-              height: 300,
-              decoration: BoxDecoration(
-                shape: BoxShape.circle,
-                color: const Color(0xFF8B5CF6).withValues(alpha: 0.1),
+          // Background Gradient (Light Grey)
+          Container(
+            decoration: const BoxDecoration(
+              gradient: LinearGradient(
+                begin: Alignment.topCenter,
+                end: Alignment.bottomCenter,
+                colors: [
+                  Color(0xFFF3F4F6),
+                  Color(0xFFE5E7EB),
+                ],
               ),
-              child: BackdropFilter(filter: ImageFilter.blur(sigmaX: 80, sigmaY: 80), child: Container()),
             ),
           ),
           
@@ -118,10 +118,10 @@ class _DisputeChatScreenState extends State<DisputeChatScreen> {
         children: [
           const Text(
             "AI MEDIATOR",
-            style: TextStyle(letterSpacing: 4, fontWeight: FontWeight.w900, fontSize: 14, color: Colors.white70),
+            style: TextStyle(letterSpacing: 4, fontWeight: FontWeight.w900, fontSize: 14, color: Color(0xFF1D1D1B)),
           ),
           IconButton(
-            icon: const Icon(Icons.info_outline, color: Colors.white24),
+            icon: Icon(Icons.info_outline, color: const Color(0xFF1D1D1B).withValues(alpha: 0.2)),
             onPressed: () {},
           ),
         ],
@@ -132,32 +132,30 @@ class _DisputeChatScreenState extends State<DisputeChatScreen> {
   Widget _buildStatusBanner() {
     return Container(
       margin: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: Colors.white.withValues(alpha: 0.03),
-        borderRadius: BorderRadius.circular(24),
-        border: Border.all(color: Colors.white.withValues(alpha: 0.05)),
-      ),
-      child: Row(
-        children: [
-          const Icon(Icons.gavel_rounded, color: Color(0xFF6366F1), size: 20),
-          const SizedBox(width: 16),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                const Text(
-                  "STATUS: ACTIVE MEDIATION",
-                  style: TextStyle(fontWeight: FontWeight.w900, fontSize: 10, color: Color(0xFF6366F1), letterSpacing: 1),
-                ),
-                Text(
-                  "Applying MY Consumer Act 1999 Section 12",
-                  style: TextStyle(fontSize: 12, color: Colors.white.withValues(alpha: 0.4)),
-                ),
-              ],
+      child: GlassCard(
+        borderRadius: 24,
+        padding: const EdgeInsets.all(16),
+        child: Row(
+          children: [
+            const Icon(Icons.gavel_rounded, color: Color(0xFF1D1D1B), size: 20),
+            const SizedBox(width: 16),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Text(
+                    "STATUS: ACTIVE MEDIATION",
+                    style: TextStyle(fontWeight: FontWeight.w900, fontSize: 10, color: Color(0xFF1D1D1B), letterSpacing: 1),
+                  ),
+                  Text(
+                    "Applying MY Consumer Act 1999 Section 12",
+                    style: TextStyle(fontSize: 12, color: const Color(0xFF1D1D1B).withValues(alpha: 0.4)),
+                  ),
+                ],
+              ),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }
@@ -165,37 +163,27 @@ class _DisputeChatScreenState extends State<DisputeChatScreen> {
   Widget _buildChatInput() {
     return Container(
       padding: const EdgeInsets.fromLTRB(24, 16, 24, 120), // Extra bottom padding for floating nav
-      child: ClipRRect(
-        borderRadius: BorderRadius.circular(28),
-        child: BackdropFilter(
-          filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
-          child: Container(
-            decoration: BoxDecoration(
-              color: Colors.white.withValues(alpha: 0.05),
-              borderRadius: BorderRadius.circular(28),
-              border: Border.all(color: Colors.white.withValues(alpha: 0.1)),
-            ),
-            child: TextField(
-              controller: _controller,
-              onSubmitted: (_) => _handleSend(),
-              style: const TextStyle(fontSize: 14),
-              decoration: InputDecoration(
-                hintText: "Message AI Mediator...",
-                hintStyle: const TextStyle(color: Colors.white24, fontSize: 14),
-                contentPadding: const EdgeInsets.symmetric(horizontal: 24, vertical: 20),
-                suffixIcon: Padding(
-                  padding: const EdgeInsets.only(right: 8),
-                  child: IconButton(
-                    icon: Icon(_isLoading ? Icons.hourglass_top : Icons.send_rounded, color: const Color(0xFF6366F1)),
-                    onPressed: _handleSend,
-                  ),
-                ),
-                border: InputBorder.none,
-                enabledBorder: InputBorder.none,
-                focusedBorder: InputBorder.none,
-                filled: false,
+      child: GlassCard(
+        borderRadius: 28,
+        child: TextField(
+          controller: _controller,
+          onSubmitted: (_) => _handleSend(),
+          style: const TextStyle(fontSize: 14, color: Color(0xFF1D1D1B)),
+          decoration: InputDecoration(
+            hintText: "Message AI Mediator...",
+            hintStyle: TextStyle(color: const Color(0xFF1D1D1B).withValues(alpha: 0.3), fontSize: 14),
+            contentPadding: const EdgeInsets.symmetric(horizontal: 24, vertical: 20),
+            suffixIcon: Padding(
+              padding: const EdgeInsets.only(right: 8),
+              child: IconButton(
+                icon: Icon(_isLoading ? Icons.hourglass_top : Icons.send_rounded, color: const Color(0xFF1D1D1B)),
+                onPressed: _handleSend,
               ),
             ),
+            border: InputBorder.none,
+            enabledBorder: InputBorder.none,
+            focusedBorder: InputBorder.none,
+            filled: false,
           ),
         ),
       ),
@@ -218,14 +206,22 @@ class ChatBubble extends StatelessWidget {
         padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 14),
         constraints: BoxConstraints(maxWidth: MediaQuery.of(context).size.width * 0.75),
         decoration: BoxDecoration(
-          color: isAi ? Colors.white.withValues(alpha: 0.05) : const Color(0xFF3B82F6),
+          color: isAi ? Colors.white.withValues(alpha: 0.4) : const Color(0xFF1D1D1B),
           borderRadius: BorderRadius.only(
             topLeft: const Radius.circular(20),
             topRight: const Radius.circular(20),
             bottomLeft: Radius.circular(isAi ? 4 : 20),
             bottomRight: Radius.circular(isAi ? 20 : 4),
           ),
-          border: isAi ? Border.all(color: Colors.white.withValues(alpha: 0.05)) : null,
+          border: isAi ? Border.all(color: Colors.white.withValues(alpha: 0.3)) : null,
+          boxShadow: [
+            if (isAi)
+              BoxShadow(
+                color: Colors.black.withValues(alpha: 0.02),
+                blurRadius: 10,
+                offset: const Offset(0, 4),
+              ),
+          ],
         ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -233,7 +229,7 @@ class ChatBubble extends StatelessWidget {
             Text(
               text.replaceAll("**", ""), // Basic cleanup if needed
               style: TextStyle(
-                color: isAi ? Colors.white.withValues(alpha: 0.9) : Colors.white,
+                color: isAi ? const Color(0xFF1D1D1B) : Colors.white,
                 fontSize: 15,
                 height: 1.5,
                 fontWeight: isTyping ? FontWeight.w300 : FontWeight.normal,
