@@ -1,9 +1,10 @@
 # --- STAGE 1: Build Flutter Web ---
-# Using the stable community image for max reliability
-FROM instrumentisto/flutter:stable AS flutter-build
+# Reverting to the image verified as pullable in your earlier logs
+FROM ghcr.io/cirruslabs/flutter:3.24.3 AS flutter-build
 USER root
 WORKDIR /app/amanah_ui
-COPY amanah_ui/pubspec.* ./
+# Use the simplified pubspec (no linting blockers)
+COPY amanah_ui/pubspec.yaml ./
 RUN flutter pub get
 COPY amanah_ui/ .
 RUN flutter build web --release
@@ -18,7 +19,7 @@ COPY . .
 # --- STAGE 3: Final Unified Container ---
 FROM python:3.10-slim
 
-# Install Node.js runtime
+# Install Node.js runtime into the Python image
 RUN apt-get update && apt-get install -y curl && \
     curl -fsSL https://deb.nodesource.com/setup_20.x | bash - && \
     apt-get install -y nodejs && \
@@ -33,7 +34,7 @@ RUN pip install --no-cache-dir -r requirements.txt
 # Copy built Flutter web files to 'ui_build'
 COPY --from=flutter-build /app/amanah_ui/build/web /app/ui_build
 
-# Copy everything else
+# Copy Node source and app code
 COPY --from=node-build /app /app
 
 # Expose ports
