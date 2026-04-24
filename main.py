@@ -42,7 +42,7 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-GENKIT_URL: str = os.environ.get("GENKIT_URL", "http://localhost:3400")
+GENKIT_URL: str = os.environ.get("GENKIT_URL", "http://127.0.0.1:3400")
 
 @app.get("/")
 async def root() -> Dict[str, str]:
