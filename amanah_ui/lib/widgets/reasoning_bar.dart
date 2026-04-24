@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:google_fonts/google_fonts.dart';
 
 class ReasoningBar extends StatelessWidget {
   final String reasoning;
@@ -9,61 +8,46 @@ class ReasoningBar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final bool isError = reasoning.startsWith("ERROR");
-    
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: const Color(0xFF1D1D1B).withValues(alpha: 0.03),
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(
-          color: isAnalyzing 
-            ? const Color(0xFF1D1D1B).withValues(alpha: 0.2) 
-            : const Color(0xFF1D1D1B).withValues(alpha: 0.05)
-        ),
+        color: Colors.black.withOpacity(0.4),
+        borderRadius: BorderRadius.circular(15),
+        border: Border.all(color: isAnalyzing ? Colors.blueAccent : Colors.greenAccent.withOpacity(0.2)),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(
             children: [
-              Icon(
-                Icons.security, 
-                size: 16, 
-                color: isError 
-                  ? Colors.redAccent 
-                  : (isAnalyzing ? const Color(0xFF1D1D1B) : const Color(0xFF10B981))
+              SizedBox(
+                width: 14,
+                height: 14,
+                child: isAnalyzing 
+                  ? const CircularProgressIndicator(strokeWidth: 2, color: Colors.blueAccent)
+                  : const Icon(Icons.psychology_outlined, size: 16, color: Colors.greenAccent),
               ),
-              const SizedBox(width: 8),
+              const SizedBox(width: 10),
               Text(
-                "SECURE AGENT LOG", 
+                isAnalyzing ? "AGENT ACTIVE" : "AGENT VERDICT",
                 style: TextStyle(
                   fontSize: 10, 
-                  fontWeight: FontWeight.w900, 
-                  letterSpacing: 1.2,
-                  color: const Color(0xFF1D1D1B).withValues(alpha: 0.4),
-                )
-              ),
-              const Spacer(),
-              if (isAnalyzing) 
-                SizedBox(
-                  height: 12, 
-                  width: 12, 
-                  child: CircularProgressIndicator(
-                    strokeWidth: 2, 
-                    color: const Color(0xFF1D1D1B).withValues(alpha: 0.3)
-                  )
+                  fontWeight: FontWeight.bold, 
+                  letterSpacing: 1.5,
+                  color: isAnalyzing ? Colors.blueAccent : Colors.greenAccent
                 ),
+              ),
             ],
           ),
-          const SizedBox(height: 10),
+          const SizedBox(height: 12),
           Text(
             reasoning,
-            style: GoogleFonts.robotoMono(
-              color: isError ? Colors.redAccent : const Color(0xFF1D1D1B).withValues(alpha: 0.7),
-              fontSize: 12,
-              height: 1.4,
+            style: const TextStyle(
+              fontFamily: 'monospace', 
+              color: Colors.white70, 
+              fontSize: 13,
+              height: 1.4
             ),
           ),
         ],
