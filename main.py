@@ -2,6 +2,7 @@ from fastapi import FastAPI, UploadFile, File, HTTPException, BackgroundTasks
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.exceptions import RequestValidationError
 from fastapi.responses import JSONResponse
+from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel
 from typing import Dict, Any, List
 import os
@@ -43,10 +44,6 @@ app.add_middleware(
 )
 
 GENKIT_URL: str = os.environ.get("GENKIT_URL", "http://127.0.0.1:3400")
-
-@app.get("/")
-async def root() -> Dict[str, str]:
-    return {"message": "Amanah-Bot EaaS Backend is running."}
 
 @app.get("/health")
 async def health_check() -> Dict[str, str]:
