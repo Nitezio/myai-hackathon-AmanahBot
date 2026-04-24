@@ -25,7 +25,7 @@ class AmanahBotApp extends StatelessWidget {
         ).copyWith(
           primary: const Color(0xFF1D1D1B), // Deep Ink
           secondary: const Color(0xFF64748B), // Slate
-          surface: Colors.white.withValues(alpha: 0.4),
+          surface: Colors.white.withOpacity(0.4),
           onSurface: const Color(0xFF1D1D1B),
         ),
         textTheme: GoogleFonts.loraTextTheme().copyWith(
@@ -42,7 +42,7 @@ class AmanahBotApp extends StatelessWidget {
           ),
           bodyLarge: GoogleFonts.inter(
             fontSize: 16, 
-            color: const Color(0xFF1D1D1B).withValues(alpha: 0.8), 
+            color: const Color(0xFF1D1D1B).withOpacity(0.8),
             height: 1.5,
           ),
           labelLarge: GoogleFonts.inter(
@@ -75,20 +75,20 @@ class AmanahBotApp extends StatelessWidget {
         ),
         inputDecorationTheme: InputDecorationTheme(
           filled: true,
-          fillColor: Colors.white.withValues(alpha: 0.4),
+          fillColor: Colors.white.withOpacity(0.4),
           border: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(20), 
-            borderSide: BorderSide(color: Colors.white.withValues(alpha: 0.3)),
+            borderRadius: BorderRadius.circular(20),
+            borderSide: BorderSide(color: Colors.white.withOpacity(0.3)),
           ),
           enabledBorder: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(20), 
-            borderSide: BorderSide(color: Colors.white.withValues(alpha: 0.3)),
+            borderRadius: BorderRadius.circular(20),
+            borderSide: BorderSide(color: Colors.white.withOpacity(0.3)),
           ),
           focusedBorder: OutlineInputBorder(
             borderRadius: BorderRadius.circular(20), 
             borderSide: const BorderSide(color: Color(0xFF1D1D1B), width: 1.5),
           ),
-          hintStyle: TextStyle(color: const Color(0xFF1D1D1B).withValues(alpha: 0.3)),
+          hintStyle: TextStyle(color: const Color(0xFF1D1D1B).withOpacity(0.3)),
         ),
       ),
       home: const HomeNavigation(),

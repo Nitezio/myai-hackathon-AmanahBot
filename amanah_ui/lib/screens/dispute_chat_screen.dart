@@ -121,7 +121,7 @@ class _DisputeChatScreenState extends State<DisputeChatScreen> {
             style: TextStyle(letterSpacing: 4, fontWeight: FontWeight.w900, fontSize: 14, color: Color(0xFF1D1D1B)),
           ),
           IconButton(
-            icon: Icon(Icons.info_outline, color: const Color(0xFF1D1D1B).withValues(alpha: 0.2)),
+            icon: Icon(Icons.info_outline, color: const Color(0xFF1D1D1B).withOpacity(0.2)),
             onPressed: () {},
           ),
         ],
@@ -149,7 +149,7 @@ class _DisputeChatScreenState extends State<DisputeChatScreen> {
                   ),
                   Text(
                     "Applying MY Consumer Act 1999 Section 12",
-                    style: TextStyle(fontSize: 12, color: const Color(0xFF1D1D1B).withValues(alpha: 0.4)),
+                    style: TextStyle(fontSize: 12, color: const Color(0xFF1D1D1B).withOpacity(0.4)),
                   ),
                 ],
               ),
@@ -171,7 +171,7 @@ class _DisputeChatScreenState extends State<DisputeChatScreen> {
           style: const TextStyle(fontSize: 14, color: Color(0xFF1D1D1B)),
           decoration: InputDecoration(
             hintText: "Message AI Mediator...",
-            hintStyle: TextStyle(color: const Color(0xFF1D1D1B).withValues(alpha: 0.3), fontSize: 14),
+            hintStyle: TextStyle(color: const Color(0xFF1D1D1B).withOpacity(0.3), fontSize: 14),
             contentPadding: const EdgeInsets.symmetric(horizontal: 24, vertical: 20),
             suffixIcon: Padding(
               padding: const EdgeInsets.only(right: 8),
@@ -206,18 +206,18 @@ class ChatBubble extends StatelessWidget {
         padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 14),
         constraints: BoxConstraints(maxWidth: MediaQuery.of(context).size.width * 0.75),
         decoration: BoxDecoration(
-          color: isAi ? Colors.white.withValues(alpha: 0.4) : const Color(0xFF1D1D1B),
+          color: isAi ? Colors.white.withOpacity(0.4) : const Color(0xFF1D1D1B),
           borderRadius: BorderRadius.only(
             topLeft: const Radius.circular(20),
             topRight: const Radius.circular(20),
             bottomLeft: Radius.circular(isAi ? 4 : 20),
             bottomRight: Radius.circular(isAi ? 20 : 4),
           ),
-          border: isAi ? Border.all(color: Colors.white.withValues(alpha: 0.3)) : null,
+          border: isAi ? Border.all(color: Colors.white.withOpacity(0.3)) : null,
           boxShadow: [
             if (isAi)
               BoxShadow(
-                color: Colors.black.withValues(alpha: 0.02),
+                color: Colors.black.withOpacity(0.02),
                 blurRadius: 10,
                 offset: const Offset(0, 4),
               ),

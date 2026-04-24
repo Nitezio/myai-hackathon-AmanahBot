@@ -51,9 +51,9 @@ class _HomeNavigationState extends State<HomeNavigation> {
             filter: ImageFilter.blur(sigmaX: 20, sigmaY: 20),
             child: Container(
               decoration: BoxDecoration(
-                color: Colors.white.withValues(alpha: 0.4),
+                color: Colors.white.withOpacity(0.4),
                 borderRadius: BorderRadius.circular(32),
-                border: Border.all(color: Colors.white.withValues(alpha: 0.3), width: 1.0),
+                border: Border.all(color: Colors.white.withOpacity(0.3), width: 1.0),
               ),
               child: Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 12),
@@ -85,7 +85,7 @@ class _HomeNavigationState extends State<HomeNavigation> {
           curve: const Cubic(0.4, 0, 0.2, 1),
           padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
           decoration: BoxDecoration(
-            color: isSelected ? const Color(0xFF1D1D1B).withValues(alpha: 0.05) : Colors.transparent,
+            color: isSelected ? const Color(0xFF1D1D1B).withOpacity(0.05) : Colors.transparent,
             borderRadius: BorderRadius.circular(20),
           ),
           child: Column(
@@ -93,14 +93,14 @@ class _HomeNavigationState extends State<HomeNavigation> {
             children: [
               Icon(
                 icon,
-                color: isSelected ? const Color(0xFF1D1D1B) : const Color(0xFF1D1D1B).withValues(alpha: 0.3),
+                color: isSelected ? const Color(0xFF1D1D1B) : const Color(0xFF1D1D1B).withOpacity(0.3),
                 size: 26,
               ),
               const SizedBox(height: 4),
               Text(
                 label,
                 style: TextStyle(
-                  color: isSelected ? const Color(0xFF1D1D1B) : const Color(0xFF1D1D1B).withValues(alpha: 0.3),
+                  color: isSelected ? const Color(0xFF1D1D1B) : const Color(0xFF1D1D1B).withOpacity(0.3),
                   fontSize: 10,
                   fontWeight: isSelected ? FontWeight.w900 : FontWeight.bold,
                   letterSpacing: 1,
