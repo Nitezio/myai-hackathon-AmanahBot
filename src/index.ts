@@ -128,7 +128,8 @@ export const receiptForensicsFlow = ai.defineFlow(
     }
 
     const response = await ai.generate({
-      model: googleAI.model('gemini-1.5-flash'), 
+      model: googleAI.model('gemini-2.5-flash-lite'),
+
       output: {
         format: 'json',
         schema: z.object({
@@ -218,7 +219,8 @@ export const disputeMediatorFlow = ai.defineFlow(
     console.log(`[AGENT RUNNING] Analyzing dispute...`);
 
     const response = await ai.generate({
-      model: googleAI.model('gemini-1.5-flash'), 
+      model: googleAI.model('gemini-2.5-flash-lite'),
+
       output: {
         format: 'json',
         schema: z.object({
