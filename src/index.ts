@@ -154,9 +154,14 @@ export const receiptForensicsFlow = ai.defineFlow(
       ],
     });
 
-    const finalDecision = response.output;
+    const finalDecision = response.output as any;
     if (!finalDecision) {
       throw new Error("AI failed to analyze receipt.");
+    }
+
+    // 🔒 NORMALIZE CONFIDENCE (0.95 -> 95)
+    if (finalDecision.confidence_score <= 1.0) {
+      finalDecision.confidence_score = finalDecision.confidence_score * 100;
     }
 
     // 🚨 TASK 4.7: THE INTELLIGENT THRESHOLD RULE (< 85%)
