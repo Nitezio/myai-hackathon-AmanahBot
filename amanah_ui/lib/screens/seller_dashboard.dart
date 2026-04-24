@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import '../services/api_service.dart';
 import '../widgets/glass_card.dart';
 
@@ -104,11 +105,22 @@ class _SellerDashboardState extends State<SellerDashboard> {
                   
                   const SizedBox(height: 40),
                   
-                  ElevatedButton(
-                    onPressed: _isLoading ? null : _createLink,
-                    child: _isLoading 
-                      ? const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
-                      : const Text("GENERATE SECURE LINK"),
+                  SizedBox(
+                    width: double.infinity,
+                    height: 60,
+                    child: ElevatedButton(
+                      onPressed: _isLoading ? null : _createLink,
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: const Color(0xFF1D1D1B),
+                        foregroundColor: Colors.white,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(20),
+                        ),
+                      ),
+                      child: _isLoading 
+                        ? const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
+                        : const Text("GENERATE SECURE LINK", style: TextStyle(fontWeight: FontWeight.w900, letterSpacing: 1.5, fontSize: 13)),
+                    ),
                   ),
                   const SizedBox(height: 100), // Space for nav
                 ],
@@ -186,9 +198,25 @@ class _SellerDashboardState extends State<SellerDashboard> {
               style: TextStyle(color: Color(0xFF10B981), fontWeight: FontWeight.w900, fontSize: 10, letterSpacing: 2),
             ),
             const SizedBox(height: 16),
-            SelectableText(
-              "amanah.bot/pay/$_generatedId",
-              style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold, letterSpacing: -0.5, color: Color(0xFF1D1D1B)),
+            Row(
+              children: [
+                Expanded(
+                  child: SelectableText(
+                    "amanah.bot/pay/$_generatedId",
+                    style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold, letterSpacing: -0.5, color: Color(0xFF1D1D1B)),
+                  ),
+                ),
+                IconButton(
+                  tooltip: "Copy link",
+                  icon: const Icon(Icons.copy_rounded, size: 20, color: Color(0xFF1D1D1B)),
+                  onPressed: () {
+                    Clipboard.setData(ClipboardData(text: "amanah.bot/pay/$_generatedId"));
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(content: Text("Link copied to clipboard!")),
+                    );
+                  },
+                ),
+              ],
             ),
             const SizedBox(height: 8),
             Text(
