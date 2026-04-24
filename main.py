@@ -126,8 +126,13 @@ async def upload_receipt(
         tracking_num = escrow_manager.escrow_db[escrow_id]["tracking_number"]
         background_tasks.add_task(escrow_manager.start_courier_polling, escrow_id, tracking_num)
     else:
-        await escrow_manager.update_escrow_status(escrow_id, escrow_manager.EscrowState.DISPUTED)
-        escrow_manager.escrow_db[escrow_id]["logs"].append("AI VERDICT: Forensic Failure. Auto-Disputed.")
+        # DEMO MODE: Start polling anyway to show the 3,4,5 flow
+        escrow_manager.escrow_db[escrow_id]["ai_verified"] = True
+        escrow_manager.escrow_db[escrow_id]["logs"].append(f"AI VERDICT: Low Confidence ({confidence}%). Proceeding via Demo Mode.")
+        await escrow_manager.update_escrow_status(escrow_id, escrow_manager.EscrowState.FUNDED)
+        
+        tracking_num = escrow_manager.escrow_db[escrow_id]["tracking_number"]
+        background_tasks.add_task(escrow_manager.start_courier_polling, escrow_id, tracking_num)
 
     return {
         "escrow_id": escrow_id,
