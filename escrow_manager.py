@@ -126,11 +126,18 @@ async def run_standard_polling(escrow_id: str, tracking_number: str):
                     await update_escrow_status(escrow_id, EscrowState.DELIVERED)
                     await release_funds_autonomously(escrow_id)
                     break
-        except: pass
+        except Exception as e:
+            logger.error(f"Polling error for {escrow_id}: {e}", extra={"escrow_id": escrow_id})
         attempts += 1
         await asyncio.sleep(5)
 
 async def release_funds_autonomously(escrow_id: str):
-    await update_escrow_status(escrow_id, EscrowState.RELEASED)
     db = get_db()
+    doc = db.collection("escrows").document(escrow_id).get()
+    if doc.exists:
+        data = doc.to_dict()
+        if not data.get("ai_verified", False):
+            logger.warning(f"BLOCKED: Cannot release {escrow_id} — AI not verified.", extra={"escrow_id": escrow_id})
+            return
+    await update_escrow_status(escrow_id, EscrowState.RELEASED)
     db.collection("escrows").document(escrow_id).update({"payout_executed": True})

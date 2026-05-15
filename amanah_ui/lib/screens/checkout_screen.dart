@@ -2,10 +2,11 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
-import '../widgets/reasoning_bar.dart';
+
 import '../widgets/glass_card.dart';
 import '../services/api_service.dart';
 import '../services/pdf_service.dart';
+import '../services/demo_state.dart';
 
 class CheckoutScreen extends StatefulWidget {
   final String? escrowId;
@@ -68,6 +69,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
 
   void _startSync(String id) {
     _stopSync();
+    DemoState.activeEscrowId = id;
     print("DEBUG: Starting Sync for ID: $id");
     _startFirestoreSubscription(id);
     _pollingTimer = Timer.periodic(const Duration(seconds: 2), (timer) {
@@ -217,7 +219,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
       backgroundColor: const Color(0xFF0F172A),
       body: SafeArea(
         child: SingleChildScrollView(
-          padding: const EdgeInsets.all(24.0),
+          padding: const EdgeInsets.fromLTRB(24, 24, 24, 120),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
@@ -259,38 +261,44 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
     bool isError = _status == "Disputed";
     return Column(
       children: [
-        Stack(
-          children: [
-            Container(
-              height: 12,
-              width: double.infinity,
-              decoration: BoxDecoration(color: Colors.white10, borderRadius: BorderRadius.circular(6)),
-            ),
-            AnimatedContainer(
-              duration: const Duration(seconds: 1),
-              curve: Curves.easeInOutCubic,
-              height: 12,
-              width: MediaQuery.of(context).size.width * _getProgress(),
-              decoration: BoxDecoration(
-                gradient: LinearGradient(
-                  begin: Alignment.centerLeft,
-                  end: Alignment.centerRight,
-                  colors: isError ? [Colors.red, Colors.redAccent] : [Colors.blueAccent, Colors.greenAccent]
+        LayoutBuilder(
+          builder: (context, constraints) {
+            final barWidth = constraints.maxWidth;
+            return Stack(
+              clipBehavior: Clip.none,
+              children: [
+                Container(
+                  height: 12,
+                  width: double.infinity,
+                  decoration: BoxDecoration(color: Colors.white10, borderRadius: BorderRadius.circular(6)),
                 ),
-                borderRadius: BorderRadius.circular(6),
-                boxShadow: [BoxShadow(color: (isError ? Colors.red : Colors.blueAccent).withOpacity(0.3), blurRadius: 10)],
-              ),
-            ),
-            if (isError)
-              Positioned(
-                left: (MediaQuery.of(context).size.width * 0.4) - 10,
-                child: Container(
-                  padding: const EdgeInsets.all(2),
-                  decoration: const BoxDecoration(color: Colors.red, shape: BoxShape.circle),
-                  child: const Icon(Icons.close, color: Colors.white, size: 12),
+                AnimatedContainer(
+                  duration: const Duration(seconds: 1),
+                  curve: Curves.easeInOutCubic,
+                  height: 12,
+                  width: barWidth * _getProgress(),
+                  decoration: BoxDecoration(
+                    gradient: LinearGradient(
+                      begin: Alignment.centerLeft,
+                      end: Alignment.centerRight,
+                      colors: isError ? [Colors.red, Colors.redAccent] : [Colors.blueAccent, Colors.greenAccent]
+                    ),
+                    borderRadius: BorderRadius.circular(6),
+                    boxShadow: [BoxShadow(color: (isError ? Colors.red : Colors.blueAccent).withOpacity(0.3), blurRadius: 10)],
+                  ),
                 ),
-              ),
-          ],
+                if (isError)
+                  Positioned(
+                    left: (barWidth * 0.4) - 10,
+                    child: Container(
+                      padding: const EdgeInsets.all(2),
+                      decoration: const BoxDecoration(color: Colors.red, shape: BoxShape.circle),
+                      child: const Icon(Icons.close, color: Colors.white, size: 12),
+                    ),
+                  ),
+              ],
+            );
+          },
         ),
         const SizedBox(height: 16),
         Row(
@@ -350,7 +358,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
           decoration: const InputDecoration(hintText: "PASTE ESCROW ID", hintStyle: TextStyle(color: Colors.white10), border: InputBorder.none),
         ),
         const SizedBox(height: 12),
-        Text(_itemName, style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: Colors.white)),
+        Text(_itemName, style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: Colors.white), maxLines: 2, overflow: TextOverflow.ellipsis, textAlign: TextAlign.center),
         Text("RM $_itemPrice", style: const TextStyle(fontSize: 32, fontWeight: FontWeight.w900, color: Colors.blueAccent)),
       ]),
     );

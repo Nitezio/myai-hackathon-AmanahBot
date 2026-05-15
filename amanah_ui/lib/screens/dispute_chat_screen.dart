@@ -1,6 +1,8 @@
 import 'dart:ui';
 import 'package:flutter/material.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import '../services/api_service.dart';
+import '../services/demo_state.dart';
 import '../widgets/glass_card.dart';
 
 class DisputeChatScreen extends StatefulWidget {
@@ -12,17 +14,97 @@ class DisputeChatScreen extends StatefulWidget {
 
 class _DisputeChatScreenState extends State<DisputeChatScreen> {
   final TextEditingController _controller = TextEditingController();
-  final List<Map<String, dynamic>> _messages = [
-    {
-      "text": "Greetings. I am Amanah AI Mediator. I've reviewed your transaction for 'Jordan 1 Retro High'. The seller has not provided tracking updates within the agreed 48h window.",
-      "isAi": true,
-    },
-    {
-      "text": "Would you like to initiate an autonomous refund protocol now?",
-      "isAi": true,
-    },
-  ];
+  final ScrollController _scrollController = ScrollController();
+  final List<Map<String, dynamic>> _messages = [];
   bool _isLoading = false;
+  String? _escrowId;
+  String _itemName = "";
+  String _itemPrice = "";
+  String _bannerTitle = "NO ACTIVE CASE";
+  String _bannerSubtitle = "Open Buyer Hub first";
+
+  @override
+  void initState() {
+    super.initState();
+    _loadEscrowContext();
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    _scrollController.dispose();
+    super.dispose();
+  }
+
+  void _scrollToBottom() {
+    Future.delayed(const Duration(milliseconds: 100), () {
+      if (_scrollController.hasClients) {
+        _scrollController.animateTo(
+          _scrollController.position.maxScrollExtent,
+          duration: const Duration(milliseconds: 300),
+          curve: Curves.easeOut,
+        );
+      }
+    });
+  }
+
+  void _loadEscrowContext() async {
+    final id = DemoState.activeEscrowId;
+    if (id == null || id.isEmpty) {
+      setState(() {
+        _messages.add({
+          "text": "Welcome. I am the Amanah AI Mediator.\n\nPlease open a transaction in the Buyer Hub first, then return here to raise a dispute.",
+          "isAi": true,
+        });
+      });
+      return;
+    }
+
+    _escrowId = id;
+
+    try {
+      final doc = await FirebaseFirestore.instance.collection('escrows').doc(id).get();
+      if (doc.exists) {
+        final data = doc.data()!;
+        _itemName = data['item'] ?? "Unknown Item";
+        _itemPrice = ((data['price'] ?? 0) as num).toStringAsFixed(2);
+        final status = data['status'] ?? "Unknown";
+
+        setState(() {
+          _bannerTitle = "CASE: $_itemName \u2022 RM $_itemPrice";
+          _bannerSubtitle = "Transaction: $id \u2022 Status: $status";
+          _messages.addAll([
+            {
+              "text": "I've loaded transaction [$id] for '$_itemName' (RM $_itemPrice).\n\nCurrent status: $status. I have access to the full transaction log. What is your complaint?",
+              "isAi": true,
+            },
+            {
+              "text": "I paid RM $_itemPrice for '$_itemName' but the seller has not delivered the item after 48 hours.",
+              "isAi": false,
+            },
+            {
+              "text": "Complaint recorded regarding '$_itemName' (RM $_itemPrice).\n\nI will apply the Malaysian Consumer Protection Act 1999 to mediate. Would you like me to proceed with the autonomous verdict?",
+              "isAi": true,
+            },
+          ]);
+        });
+      } else {
+        setState(() {
+          _messages.add({
+            "text": "Transaction [$id] not found in our records. Please verify the escrow ID in the Buyer Hub.",
+            "isAi": true,
+          });
+        });
+      }
+    } catch (e) {
+      setState(() {
+        _messages.add({
+          "text": "AI Mediator ready. Could not load transaction context. Please describe your dispute below.",
+          "isAi": true,
+        });
+      });
+    }
+  }
 
   void _handleSend() async {
     if (_controller.text.isEmpty || _isLoading) return;
@@ -33,22 +115,33 @@ class _DisputeChatScreenState extends State<DisputeChatScreen> {
       _isLoading = true;
     });
     _controller.clear();
+    _scrollToBottom();
 
     try {
       final result = await ApiService.raiseDispute(
-        "TX-DEMO-123",
+        _escrowId ?? "TX-DEMO-123",
         userMessage,
         "No response from seller after 48h.",
-        _messages.map((m) => "${m['isAi'] ? 'AI' : 'User'}: ${m['text']}").join("\n"),
+        _messages.map((m) => "${m['isAi'] ? 'AI Mediator' : 'Buyer'}: ${m['text']}").join("\n"),
       );
+
+      final resolution = result['ai_resolution'] ?? {};
+      final reasoning = resolution['reasoning'] ?? "Verdict has been reached.";
+      final action = resolution['actionToTake'] ?? "PENDING";
+      final winner = resolution['winner'] ?? "N/A";
+
+      String actionText = action == "REFUND_BUYER"
+          ? "\u26a1 VERDICT: REFUND initiated to buyer."
+          : "\u2705 VERDICT: Funds RELEASED to seller.";
 
       setState(() {
         _messages.add({
-          "text": result['ai_resolution']['reasoning'] ?? "Verdict reached: ${result['ai_resolution']['actionToTake']}",
+          "text": "$reasoning\n\nRuling: $winner\n$actionText",
           "isAi": true,
         });
         _isLoading = false;
       });
+      _scrollToBottom();
     } catch (e) {
       setState(() {
         _messages.add({
@@ -65,16 +158,13 @@ class _DisputeChatScreenState extends State<DisputeChatScreen> {
     return Scaffold(
       body: Stack(
         children: [
-          // Background Gradient (Light Grey)
+          // Background Gradient
           Container(
             decoration: const BoxDecoration(
               gradient: LinearGradient(
                 begin: Alignment.topCenter,
                 end: Alignment.bottomCenter,
-                colors: [
-                  Color(0xFFF3F4F6),
-                  Color(0xFFE5E7EB),
-                ],
+                colors: [Color(0xFFF3F4F6), Color(0xFFE5E7EB)],
               ),
             ),
           ),
@@ -87,11 +177,12 @@ class _DisputeChatScreenState extends State<DisputeChatScreen> {
                 
                 Expanded(
                   child: ListView.builder(
+                    controller: _scrollController,
                     padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 20),
                     itemCount: _messages.length + (_isLoading ? 1 : 0),
                     itemBuilder: (context, index) {
                       if (index == _messages.length) {
-                        return const ChatBubble(text: "AI is analyzing case...", isAi: true, isTyping: true);
+                        return const ChatBubble(text: "Analyzing case with AI...", isAi: true, isTyping: true);
                       }
                       return ChatBubble(
                         text: _messages[index]["text"],
@@ -120,10 +211,16 @@ class _DisputeChatScreenState extends State<DisputeChatScreen> {
             "AI MEDIATOR",
             style: TextStyle(letterSpacing: 4, fontWeight: FontWeight.w900, fontSize: 14, color: Color(0xFF1D1D1B)),
           ),
-          IconButton(
-            icon: Icon(Icons.info_outline, color: const Color(0xFF1D1D1B).withOpacity(0.2)),
-            onPressed: () {},
-          ),
+          if (_escrowId != null)
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+              decoration: BoxDecoration(
+                color: Colors.redAccent.withOpacity(0.1),
+                borderRadius: BorderRadius.circular(8),
+                border: Border.all(color: Colors.redAccent.withOpacity(0.3)),
+              ),
+              child: const Text("LIVE", style: TextStyle(color: Colors.redAccent, fontSize: 9, fontWeight: FontWeight.w900, letterSpacing: 1)),
+            ),
         ],
       ),
     );
@@ -143,13 +240,17 @@ class _DisputeChatScreenState extends State<DisputeChatScreen> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const Text(
-                    "STATUS: ACTIVE MEDIATION",
-                    style: TextStyle(fontWeight: FontWeight.w900, fontSize: 10, color: Color(0xFF1D1D1B), letterSpacing: 1),
+                  Text(
+                    _bannerTitle,
+                    style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 10, color: Color(0xFF1D1D1B), letterSpacing: 1),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
                   ),
                   Text(
-                    "Applying MY Consumer Act 1999 Section 12",
-                    style: TextStyle(fontSize: 12, color: const Color(0xFF1D1D1B).withOpacity(0.4)),
+                    _bannerSubtitle,
+                    style: TextStyle(fontSize: 11, color: const Color(0xFF1D1D1B).withOpacity(0.4)),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
                   ),
                 ],
               ),
@@ -162,7 +263,7 @@ class _DisputeChatScreenState extends State<DisputeChatScreen> {
 
   Widget _buildChatInput() {
     return Container(
-      padding: const EdgeInsets.fromLTRB(24, 16, 24, 120), // Extra bottom padding for floating nav
+      padding: const EdgeInsets.fromLTRB(24, 16, 24, 120),
       child: GlassCard(
         borderRadius: 28,
         child: TextField(
@@ -170,14 +271,14 @@ class _DisputeChatScreenState extends State<DisputeChatScreen> {
           onSubmitted: (_) => _handleSend(),
           style: const TextStyle(fontSize: 14, color: Color(0xFF1D1D1B)),
           decoration: InputDecoration(
-            hintText: "Message AI Mediator...",
+            hintText: _escrowId != null ? "Message AI Mediator..." : "Open Buyer Hub first...",
             hintStyle: TextStyle(color: const Color(0xFF1D1D1B).withOpacity(0.3), fontSize: 14),
             contentPadding: const EdgeInsets.symmetric(horizontal: 24, vertical: 20),
             suffixIcon: Padding(
               padding: const EdgeInsets.only(right: 8),
               child: IconButton(
                 icon: Icon(_isLoading ? Icons.hourglass_top : Icons.send_rounded, color: const Color(0xFF1D1D1B)),
-                onPressed: _handleSend,
+                onPressed: (_isLoading || _escrowId == null) ? null : _handleSend,
               ),
             ),
             border: InputBorder.none,
@@ -223,23 +324,17 @@ class ChatBubble extends StatelessWidget {
               ),
           ],
         ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              text.replaceAll("**", ""), // Basic cleanup if needed
-              style: TextStyle(
-                color: isAi ? const Color(0xFF1D1D1B) : Colors.white,
-                fontSize: 15,
-                height: 1.5,
-                fontWeight: isTyping ? FontWeight.w300 : FontWeight.normal,
-                fontStyle: isTyping ? FontStyle.italic : FontStyle.normal,
-              ),
-            ),
-          ],
+        child: Text(
+          text.replaceAll("**", ""),
+          style: TextStyle(
+            color: isAi ? const Color(0xFF1D1D1B) : Colors.white,
+            fontSize: 15,
+            height: 1.5,
+            fontWeight: isTyping ? FontWeight.w300 : FontWeight.normal,
+            fontStyle: isTyping ? FontStyle.italic : FontStyle.normal,
+          ),
         ),
       ),
     );
   }
 }
-

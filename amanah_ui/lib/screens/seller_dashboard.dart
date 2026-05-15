@@ -4,6 +4,7 @@ import 'package:fl_chart/fl_chart.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import '../services/api_service.dart';
+import '../services/demo_state.dart';
 import '../widgets/glass_card.dart';
 import 'dart:html' as html;
 
@@ -22,6 +23,7 @@ class _SellerDashboardState extends State<SellerDashboard> with SingleTickerProv
   String _selectedCategory = "Online Business";
   bool _isLoading = false;
   String? _generatedId;
+  String _manageFilter = "All";
 
   @override
   void initState() {
@@ -29,16 +31,30 @@ class _SellerDashboardState extends State<SellerDashboard> with SingleTickerProv
     _tabController = TabController(length: 3, vsync: this);
   }
 
+  @override
+  void dispose() {
+    _tabController.dispose();
+    _itemController.dispose();
+    _priceController.dispose();
+    _trackingController.dispose();
+    super.dispose();
+  }
+
   void _createLink() async {
     if (_itemController.text.isEmpty || _priceController.text.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text("Please fill in item name and price")));
+      return;
+    }
+    final price = double.tryParse(_priceController.text);
+    if (price == null || price <= 0) {
+      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text("Please enter a valid price")));
       return;
     }
     setState(() => _isLoading = true);
     try {
       final res = await ApiService.createEscrow(
         _itemController.text,
-        double.parse(_priceController.text),
+        price,
         _trackingController.text,
         _selectedCategory,
       );
@@ -86,7 +102,7 @@ class _SellerDashboardState extends State<SellerDashboard> with SingleTickerProv
 
   Widget _buildCreateTab() {
     return SingleChildScrollView(
-      padding: const EdgeInsets.all(24.0),
+      padding: const EdgeInsets.fromLTRB(24, 24, 24, 120),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -140,43 +156,142 @@ class _SellerDashboardState extends State<SellerDashboard> with SingleTickerProv
 
   Widget _buildManageTab() {
     final user = FirebaseAuth.instance.currentUser;
+    final String uid = user?.uid ?? (DemoState.isDemoMode ? "demo_seller_123" : "");
+    if (uid.isEmpty) return const Center(child: Text("Not authenticated.", style: TextStyle(color: Colors.white38)));
     return StreamBuilder<QuerySnapshot>(
       stream: FirebaseFirestore.instance
           .collection('escrows')
-          .where('seller_uid', isEqualTo: user?.uid)
+          .where('seller_uid', isEqualTo: uid)
           .snapshots(),
       builder: (context, snapshot) {
+        if (snapshot.hasError) {
+          return Center(child: Padding(
+            padding: const EdgeInsets.all(32),
+            child: Text("Error loading transactions.\n${snapshot.error}",
+              style: const TextStyle(color: Colors.redAccent, fontSize: 12), textAlign: TextAlign.center),
+          ));
+        }
         if (!snapshot.hasData) return const Center(child: CircularProgressIndicator());
         final docs = snapshot.data!.docs;
         if (docs.isEmpty) return const Center(child: Text("No transactions yet.", style: TextStyle(color: Colors.white38)));
 
-        return ListView.builder(
-          padding: const EdgeInsets.all(24),
-          itemCount: docs.length,
-          itemBuilder: (context, index) {
-            final data = docs[index].data() as Map<String, dynamic>;
-            final id = docs[index].id;
-            return Container(
-              margin: const EdgeInsets.only(bottom: 16),
-              padding: const EdgeInsets.all(16),
-              decoration: BoxDecoration(color: Colors.white.withOpacity(0.03), borderRadius: BorderRadius.circular(16), border: Border.all(color: Colors.white10)),
+        // Count per category
+        int pendingCount = docs.where((d) => d['status'] != "Disputed" && d['status'] != "Released").length;
+        int disputedCount = docs.where((d) => d['status'] == "Disputed").length;
+        int releasedCount = docs.where((d) => d['status'] == "Released").length;
+
+        // Filter docs
+        final filteredDocs = docs.where((doc) {
+          final status = (doc.data() as Map<String, dynamic>)['status'] as String?;
+          switch (_manageFilter) {
+            case "Pending": return status != "Disputed" && status != "Released";
+            case "Disputed": return status == "Disputed";
+            case "Released": return status == "Released";
+            default: return true;
+          }
+        }).toList();
+
+        return Column(
+          children: [
+            // Filter chips row
+            SingleChildScrollView(
+              scrollDirection: Axis.horizontal,
+              padding: const EdgeInsets.fromLTRB(24, 16, 24, 8),
               child: Row(
                 children: [
-                  Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(data['item'] ?? "Item", style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
-                      Text("ID: $id", style: const TextStyle(color: Colors.white24, fontSize: 10, fontFamily: 'monospace')),
-                    ],
-                  ),
-                  const Spacer(),
-                  _buildStatusBadge(data['status']),
+                  _buildFilterChip("All", docs.length),
+                  const SizedBox(width: 8),
+                  _buildFilterChip("Pending", pendingCount),
+                  const SizedBox(width: 8),
+                  _buildFilterChip("Disputed", disputedCount),
+                  const SizedBox(width: 8),
+                  _buildFilterChip("Released", releasedCount),
                 ],
               ),
-            );
-          },
+            ),
+            // Filtered list
+            Expanded(
+              child: filteredDocs.isEmpty
+                ? Center(child: Text("No ${_manageFilter.toLowerCase()} transactions.", style: const TextStyle(color: Colors.white24)))
+                : ListView.builder(
+                    padding: const EdgeInsets.fromLTRB(24, 8, 24, 120),
+                    itemCount: filteredDocs.length,
+                    itemBuilder: (context, index) {
+                      final data = filteredDocs[index].data() as Map<String, dynamic>;
+                      final id = filteredDocs[index].id;
+                      final price = ((data['price'] ?? 0) as num).toStringAsFixed(2);
+                      return GestureDetector(
+                        onTap: () {
+                          Clipboard.setData(ClipboardData(text: id));
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            SnackBar(content: Text("Escrow ID copied: $id"), duration: const Duration(seconds: 2)),
+                          );
+                        },
+                        child: Container(
+                          margin: const EdgeInsets.only(bottom: 16),
+                          padding: const EdgeInsets.all(16),
+                          decoration: BoxDecoration(color: Colors.white.withOpacity(0.03), borderRadius: BorderRadius.circular(16), border: Border.all(color: Colors.white10)),
+                          child: Row(
+                            children: [
+                              Expanded(
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Text(data['item'] ?? "Item", style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 15), maxLines: 1, overflow: TextOverflow.ellipsis),
+                                    const SizedBox(height: 4),
+                                    Text("RM $price  \u2022  ${data['category'] ?? 'General'}", style: const TextStyle(color: Colors.white54, fontSize: 12)),
+                                    const SizedBox(height: 4),
+                                    Row(
+                                      children: [
+                                        const Icon(Icons.copy, size: 10, color: Colors.white24),
+                                        const SizedBox(width: 4),
+                                        Text(id, style: const TextStyle(color: Colors.white24, fontSize: 10, fontFamily: 'monospace')),
+                                      ],
+                                    ),
+                                  ],
+                                ),
+                              ),
+                              const SizedBox(width: 12),
+                              _buildStatusBadge(data['status']),
+                            ],
+                          ),
+                        ),
+                      );
+                    },
+                  ),
+            ),
+          ],
         );
       },
+    );
+  }
+
+  Widget _buildFilterChip(String label, int count) {
+    bool selected = _manageFilter == label;
+    Color chipColor = Colors.blueAccent;
+    if (label == "Disputed") chipColor = Colors.redAccent;
+    if (label == "Released") chipColor = Colors.greenAccent;
+
+    return GestureDetector(
+      onTap: () => setState(() => _manageFilter = label),
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 200),
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+        decoration: BoxDecoration(
+          color: selected ? chipColor.withOpacity(0.15) : Colors.white.withOpacity(0.03),
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(color: selected ? chipColor.withOpacity(0.5) : Colors.white10),
+        ),
+        child: Text(
+          "$label ($count)",
+          style: TextStyle(
+            color: selected ? chipColor : Colors.white38,
+            fontSize: 11,
+            fontWeight: FontWeight.w700,
+            letterSpacing: 0.5,
+          ),
+        ),
+      ),
     );
   }
 
@@ -195,22 +310,31 @@ class _SellerDashboardState extends State<SellerDashboard> with SingleTickerProv
 
   Widget _buildAnalyticsTab() {
     final user = FirebaseAuth.instance.currentUser;
+    final String uid = user?.uid ?? (DemoState.isDemoMode ? "demo_seller_123" : "");
+    if (uid.isEmpty) return const Center(child: Text("Not authenticated.", style: TextStyle(color: Colors.white38)));
     return StreamBuilder<QuerySnapshot>(
       stream: FirebaseFirestore.instance
           .collection('escrows')
-          .where('seller_uid', isEqualTo: user?.uid)
+          .where('seller_uid', isEqualTo: uid)
           .snapshots(),
       builder: (context, snapshot) {
+        if (snapshot.hasError) {
+          return Center(child: Padding(
+            padding: const EdgeInsets.all(32),
+            child: Text("Error loading analytics.\n${snapshot.error}",
+              style: const TextStyle(color: Colors.redAccent, fontSize: 12), textAlign: TextAlign.center),
+          ));
+        }
         if (!snapshot.hasData) return const Center(child: CircularProgressIndicator());
         final docs = snapshot.data!.docs;
         
         int released = docs.where((d) => d['status'] == "Released").length;
-        int disputed = docs.where((d) => d['status'] == "Disputed" || d['status'] == "AUTO_DISPUTED").length;
+        int disputed = docs.where((d) => d['status'] == "Disputed").length;
         int active = docs.length - released - disputed;
-        double totalVolume = docs.fold(0.0, (sum, d) => sum + (d['price'] ?? 0.0));
+        double totalVolume = docs.fold(0.0, (double sum, d) => sum + ((d['price'] ?? 0) as num).toDouble());
 
         return SingleChildScrollView(
-          padding: const EdgeInsets.all(24),
+          padding: const EdgeInsets.fromLTRB(24, 24, 24, 120),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
@@ -220,24 +344,38 @@ class _SellerDashboardState extends State<SellerDashboard> with SingleTickerProv
                 children: [
                   _buildStatCard("Total Volume", "RM ${totalVolume.toStringAsFixed(2)}", Icons.account_balance_wallet_outlined),
                   const SizedBox(width: 16),
+                  _buildStatCard("Transactions", "${docs.length}", Icons.receipt_long_outlined),
+                ],
+              ),
+              const SizedBox(height: 16),
+              Row(
+                children: [
                   _buildStatCard("Success Rate", "${docs.isEmpty ? 0 : (released / docs.length * 100).toInt()}%", Icons.verified_outlined),
+                  const SizedBox(width: 16),
+                  _buildStatCard("Fraud Blocked", "$disputed", Icons.shield_outlined),
                 ],
               ),
               const SizedBox(height: 40),
               const Text("Transaction Health", style: TextStyle(color: Colors.white70, fontSize: 14, fontWeight: FontWeight.bold)),
               const SizedBox(height: 20),
-              SizedBox(
-                height: 200,
-                child: PieChart(
-                  PieChartData(
-                    sections: [
-                      PieChartSectionData(value: released.toDouble(), color: Colors.greenAccent, title: 'Success', radius: 50, titleStyle: const TextStyle(fontSize: 10, color: Colors.white)),
-                      PieChartSectionData(value: disputed.toDouble(), color: Colors.redAccent, title: 'Fraud', radius: 50, titleStyle: const TextStyle(fontSize: 10, color: Colors.white)),
-                      PieChartSectionData(value: active.toDouble(), color: Colors.blueAccent, title: 'Active', radius: 50, titleStyle: const TextStyle(fontSize: 10, color: Colors.white)),
-                    ],
+              if (released == 0 && disputed == 0 && active == 0)
+                const SizedBox(
+                  height: 200,
+                  child: Center(child: Text("No transaction data yet.", style: TextStyle(color: Colors.white24))),
+                )
+              else
+                SizedBox(
+                  height: 200,
+                  child: PieChart(
+                    PieChartData(
+                      sections: [
+                        if (released > 0) PieChartSectionData(value: released.toDouble(), color: Colors.greenAccent, title: 'Success\n$released', radius: 50, titleStyle: const TextStyle(fontSize: 10, color: Colors.white)),
+                        if (disputed > 0) PieChartSectionData(value: disputed.toDouble(), color: Colors.redAccent, title: 'Fraud\n$disputed', radius: 50, titleStyle: const TextStyle(fontSize: 10, color: Colors.white)),
+                        if (active > 0) PieChartSectionData(value: active.toDouble(), color: Colors.blueAccent, title: 'Active\n$active', radius: 50, titleStyle: const TextStyle(fontSize: 10, color: Colors.white)),
+                      ],
+                    ),
                   ),
                 ),
-              ),
             ],
           ),
         );

@@ -118,8 +118,8 @@ export const receiptForensicsFlow = ai.defineFlow(
        output.reasoning = `[AMOUNT MISMATCH] Found RM ${cleanExtracted.toFixed(2)} but expected RM ${expected.toFixed(2)}.`;
     }
 
-    // Lower confidence threshold to 65% for better demo reliability with mobile camera photos
-    if (output.confidence_score < 65 && finalRejection === "NONE") {
+    // Confidence guardrail — must meet 85% threshold per security mandate
+    if (output.confidence_score < 85 && finalRejection === "NONE") {
        finalRejection = "LOW_CONFIDENCE";
        finalAuthentic = false;
        output.reasoning = `AI Confidence low (${output.confidence_score.toFixed(0)}%). Please provide a clearer photo.`;
@@ -129,7 +129,6 @@ export const receiptForensicsFlow = ai.defineFlow(
 
     return {
       receipt_hash: fileHash,
-      fraud_indicators: [],
       ...output,
       rejection_type: finalRejection,
       is_authentic: finalAuthentic

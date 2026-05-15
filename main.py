@@ -124,6 +124,9 @@ async def upload_receipt(
 
     data = doc.to_dict()
     
+    if not file.content_type or not file.content_type.startswith("image/"):
+        raise HTTPException(status_code=400, detail="Only image files are supported.")
+
     # 1. Independent SHA-256 Hashing
     contents = await file.read()
     file_hash = hashlib.sha256(contents).hexdigest()
@@ -131,9 +134,6 @@ async def upload_receipt(
         "receipt_hash": file_hash,
         "logs": firestore.ArrayUnion([f"FINGERPRINT GEN: {file_hash[:16]}..."])
     })
-
-    if not file.content_type or not file.content_type.startswith("image/"):
-        raise HTTPException(status_code=400, detail="Only image files are supported.")
     
     base64_image = f"data:{file.content_type};base64,{base64.b64encode(contents).decode('utf-8')}"
     
@@ -188,11 +188,12 @@ async def upload_receipt(
         })
         await escrow_manager.update_escrow_status(escrow_id, escrow_manager.EscrowState.DISPUTED)
 
+    actual_status = "Funded" if (is_authentic and confidence >= 85 and rejection_type == "NONE") else "Disputed"
     return {
         "escrow_id": escrow_id,
         "receipt_hash": file_hash,
         "ai_verdict": analysis,
-        "current_status": "Funded"
+        "current_status": actual_status
     }
 
 @app.get("/api/escrow/status/{escrow_id}")
@@ -205,10 +206,9 @@ async def get_status(escrow_id: str) -> Dict[str, Any]:
 @app.post("/api/escrow/dispute/{escrow_id}")
 async def raise_dispute(escrow_id: str, request: DisputeRequest) -> Dict[str, Any]:
     doc_ref = db.collection("escrows").document(escrow_id)
-    if not doc_ref.get().exists:
-        raise HTTPException(status_code=404, detail="Escrow not found.")
-
-    doc_ref.update({"logs": firestore.ArrayUnion(["DISPUTE: Initializing AI Mediator..."])})
+    escrow_exists = doc_ref.get().exists
+    if escrow_exists:
+        doc_ref.update({"logs": firestore.ArrayUnion(["DISPUTE: Initializing AI Mediator..."])})
 
     try:
         async with httpx.AsyncClient() as client:
@@ -220,19 +220,21 @@ async def raise_dispute(escrow_id: str, request: DisputeRequest) -> Dict[str, An
                         "sellerResponse": request.seller_response,
                         "chatLogs": request.chat_logs
                     }
-                }
+                },
+                timeout=30.0
             )
             resolution = genkit_resp.json().get("result", {})
     except Exception as e:
-        return {"status": "BRIDGE_ERROR", "message": str(e)}
+        raise HTTPException(status_code=502, detail=f"AI Mediator bridge failed: {str(e)}")
 
-    action = resolution.get("actionToTake")
-    if action == "REFUND_BUYER":
-        await escrow_manager.update_escrow_status(escrow_id, escrow_manager.EscrowState.DISPUTED)
-        doc_ref.update({"logs": firestore.ArrayUnion(["MEDIATOR: Refund approved."])})
-    else:
-        await escrow_manager.update_escrow_status(escrow_id, escrow_manager.EscrowState.RELEASED)
-        doc_ref.update({"logs": firestore.ArrayUnion(["MEDIATOR: Payout released."])})
+    if escrow_exists:
+        action = resolution.get("actionToTake")
+        if action == "REFUND_BUYER":
+            await escrow_manager.update_escrow_status(escrow_id, escrow_manager.EscrowState.DISPUTED)
+            doc_ref.update({"logs": firestore.ArrayUnion(["MEDIATOR: Refund approved."])})
+        else:
+            await escrow_manager.update_escrow_status(escrow_id, escrow_manager.EscrowState.RELEASED)
+            doc_ref.update({"logs": firestore.ArrayUnion(["MEDIATOR: Payout released."])})
 
     return {
         "escrow_id": escrow_id,
